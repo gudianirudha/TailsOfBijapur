@@ -22,7 +22,14 @@ const PORT = process.env.PORT || 4000;
 ============================== */
 
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
+
+app.use(
+    cors({
+        origin: process.env.FRONTEND_URL || "*",
+        credentials: true,
+    })
+);
+
 app.use(express.json());
 
 const loginLimiter = rateLimit({
@@ -31,12 +38,21 @@ const loginLimiter = rateLimit({
 });
 
 /* ==============================
+   Env Safety Check
+============================== */
+
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET missing in environment variables");
+}
+
+/* ==============================
    MongoDB
 ============================== */
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+    .connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.error("MongoDB Error:", err));
+    .catch((err) => console.error("MongoDB Error:", err));
 
 /* ==============================
    Schemas
@@ -90,7 +106,10 @@ const storage = new CloudinaryStorage({
     },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
 
 /* ==============================
    Email Transport
@@ -110,31 +129,45 @@ const transporter = nodemailer.createTransport({
    Adoption Submit
 ============================== */
 
-app.post("/api/adopt-submissions", upload.single("image"), async(req, res) => {
-    try {
-        const { location, phone } = req.body;
-        if (!location || !phone)
-            return res.status(400).json({ error: "Missing required fields" });
+app.post(
+    "/api/adopt-submissions",
+    upload.single("image"),
+    async(req, res) => {
+        try {
+            const { location, phone } = req.body;
 
-        const submission = await Adoption.create({
-            ...req.body,
-            imageUrl: req.file ? .path || null,
-            public_id: req.file ? .filename || null,
-        });
+            if (!location || !phone) {
+                return res
+                    .status(400)
+                    .json({ error: "Missing required fields" });
+            }
 
-        transporter.sendMail({
-            from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
-            to: process.env.ADMIN_EMAIL,
-            subject: `🐾 New Adoption - ${submission.name || "Unknown"}`,
-            text: `New submission received.`,
-        }).catch(err => console.error("Email Error:", err.message));
+            const submission = await Adoption.create({
+                ...req.body,
+                imageUrl: req.file ? req.file.path : null,
+                public_id: req.file ? req.file.filename : null,
+            });
 
-        res.json({ ok: true });
+            transporter
+                .sendMail({
+                    from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
+                    to: process.env.ADMIN_EMAIL,
+                    subject: `🐾 New Adoption - ${
+                        submission.name || "Unknown"
+                    }`,
+                    text: `New submission received.`,
+                })
+                .catch((err) =>
+                    console.error("Email Error:", err.message)
+                );
 
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+            res.json({ ok: true });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: err.message });
+        }
     }
-});
+);
 
 /* ==============================
    Volunteer Submit
@@ -144,7 +177,8 @@ app.post("/api/volunteer", async(req, res) => {
     try {
         await Volunteer.create(req.body);
         res.json({ ok: true });
-    } catch {
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Submission failed" });
     }
 });
@@ -175,13 +209,16 @@ app.post("/api/admin/login", loginLimiter, (req, res) => {
 ============================== */
 
 function verifyAdmin(req, res, next) {
-    const token = req.headers.authorization ? .split(" ")[1];
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
+    const token = req.headers.authorization ? req.headers.authorization.split(" ")[1] : null;
+
+    if (!token) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
 
     try {
         jwt.verify(token, process.env.JWT_SECRET);
         next();
-    } catch {
+    } catch (err) {
         res.status(401).json({ error: "Invalid token" });
     }
 }
@@ -197,7 +234,8 @@ app.get("/api/admin/pending", verifyAdmin, async(req, res) => {
             .lean();
 
         res.json(data);
-    } catch {
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Failed to fetch" });
     }
 });
@@ -206,28 +244,32 @@ app.patch("/api/admin/adoptions/:id", verifyAdmin, async(req, res) => {
     try {
         const { status } = req.body;
 
-        if (!["approved", "rejected"].includes(status))
+        if (!["approved", "rejected"].includes(status)) {
             return res.status(400).json({ error: "Invalid status" });
+        }
 
         const updated = await Adoption.findByIdAndUpdate(
             req.params.id, { status }, { new: true }
         );
 
-        if (!updated)
+        if (!updated) {
             return res.status(404).json({ error: "Record not found" });
+        }
 
         if (status === "approved" && updated.email) {
-            transporter.sendMail({
-                from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
-                to: updated.email,
-                subject: "🐾 Adoption Approved!",
-                text: `Hello ${updated.name}, your adoption request is approved!`,
-            }).catch(err => console.error(err.message));
+            transporter
+                .sendMail({
+                    from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
+                    to: updated.email,
+                    subject: "🐾 Adoption Approved!",
+                    text: `Hello ${updated.name}, your adoption request is approved!`,
+                })
+                .catch((err) => console.error(err.message));
         }
 
         res.json(updated);
-
-    } catch {
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Update failed" });
     }
 });
@@ -239,12 +281,15 @@ app.patch("/api/admin/adoptions/:id", verifyAdmin, async(req, res) => {
 app.get("/api/approved-puppies", async(req, res) => {
     try {
         const data = await Adoption.find({ status: "approved" })
-            .select("name age gender vaccinated description imageUrl reportername")
+            .select(
+                "name age gender vaccinated description imageUrl reportername"
+            )
             .sort({ createdAt: -1 })
             .lean();
 
         res.json(data);
-    } catch {
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Failed to fetch" });
     }
 });
@@ -253,6 +298,6 @@ app.get("/api/approved-puppies", async(req, res) => {
    Start Server
 ============================== */
 
-app.listen(PORT, () =>
-    console.log(`Server running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
