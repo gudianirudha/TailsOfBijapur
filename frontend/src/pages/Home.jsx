@@ -55,7 +55,7 @@ export default function Home() {
         <div className="flex animate-marquee font-black uppercase text-2xl tracking-tighter italic text-black">
           {[...Array(10)].map((_, i) => (
             <span key={i} className="mx-8 flex items-center gap-4">
-              Tails of Bijapur <Zap fill="black" /> 500+ Rescued <Zap fill="black" /> Street Guardians <Zap fill="black" />
+              Tails of Bijapur <Zap fill="black" /> 50+ Rescued <Zap fill="black" /> Street Guardians <Zap fill="black" />
             </span>
           ))}
         </div>

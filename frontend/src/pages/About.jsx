@@ -65,7 +65,7 @@ export default function About() {
               receive timely care and a fair chance at life. 
             </p>
             <p>
-              Many compassionate individuals were already fighting the good fight in the shadows—rescuing, feeding, fostering, and arranging medical care independently out of their own pockets.
+              Many compassionate individuals were already fighting the good fight in the shadows rescuing, feeding, fostering, and arranging medical care independently out of their own pockets.
             </p>
             <div className="p-8 border-l-4 border-orange-600 bg-white/5 rounded-r-2xl my-12">
               <p className="text-white font-bold italic">

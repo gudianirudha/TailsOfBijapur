@@ -132,5 +132,15 @@
         "name": "Namratha J",
         "role": "On-Spot Emergency Response",
         "photo": "/icons/user-placeholder.jpg"
+    },
+    {
+        "name": "Vinayak Kulkarni",
+        "role": "On-Spot Emergency Response",
+        "photo": "/icons/user-placeholder.jpg"
+    },
+    {
+        "name": "Ashwini B",
+        "role": "On-Spot Emergency Response",
+        "photo": "/icons/user-placeholder.jpg"
     }
 ]

@@ -24,6 +24,21 @@ const doctors = [
     address: "Ashram Rd, Opposite Blossom Photo Studio Neela Nagar, Vijayapura, Karnataka 586103",
     mapLink: "https://www.google.com/maps/search/?api=1&query=VP39+MP+Vijayapura+Karnataka",
   },
+  {
+    name: "Dr Mallikarjun Hiremath",
+    clinic: "Hiremath's Pet Clinic & Veterinary Diagnostic Centre",
+    phone: "09060477134",
+    address: "Vivek Nagar W, Jala Nagar, Vijayapura, Karnataka 586109",
+    mapLink: "https://maps.app.goo.gl/XHLCfCugtqrdwpjG9",
+  },
+  {
+    name: "Dr Prashant Bellundagi",
+    clinic: "Dreamline Pet Clinic-DPC",
+    phone: "08095516189",
+    address: "Banjara Road, Near Dr.Ukkali Children Hospital Road Banjara Nagar Vijayapura Karnataka 586103",
+    mapLink: "https://maps.app.goo.gl/LjKUCJD3CMUc3d766",
+  },
+
 ];
 
 const ALL_VETS_MAP = "https://www.google.com/maps/search/?api=1&query=Veterinary+clinic+in+Vijayapura";

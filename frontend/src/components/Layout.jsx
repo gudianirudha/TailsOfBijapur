@@ -26,6 +26,7 @@ const Nav = () => {
     { name: "Volunteer", path: "/volunteer" },
     { name: "Awareness", path: "/awareness" },
     { name: "Support", path: "/doctors" },
+    { name: "Impact", path: "/impact" },
   ];
 
   return (

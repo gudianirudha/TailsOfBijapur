@@ -53,8 +53,7 @@ export default function Volunteer() {
             <span className="text-transparent stroke-text italic">THEY SURVIVE.</span>
           </h1>
           <p className="text-xl text-gray-400 font-medium leading-relaxed max-w-2xl">
-            Compassion is not a feeling; it is an action. Join a community that shows up on the ground for the injured, abandoned, and voiceless animals of Bijapur.
-          </p>
+          Every injured or abandoned animal is just waiting for someone to care enough to stop. Don't just feel sorry for them. Be the one who stops. Join us on the ground and help save a life today          </p>
         </div>
       </section>
 
@@ -71,10 +70,10 @@ export default function Volunteer() {
               <div className="h-1 w-20 bg-orange-600 mb-8" />
               <p className="text-gray-400 leading-relaxed text-lg mb-6 text-justify">
                 Volunteering with Tails of Bijapur means being present when it
-                truly matters. You don&apos;t need to be a professional rescuer to make a difference. We need drivers, coordinators, fosters, and extra hands.
+                truly matters. You don&apos;t need to be a professional rescuer to make a difference. We need compassionate individuals, coordinators, fosters, and extra hands.
               </p>
               <p className="text-gray-400 leading-relaxed text-lg text-justify italic border-l-2 border-white/20 pl-4">
-                "If you believe compassion should be acted upon, not just felt, we&apos;d love to have you walk this journey with us."
+                If you believe compassion should be acted upon, not just felt, we&apos;d love to have you walk this journey with us.
               </p>
             </div>
 
