@@ -1,200 +1,214 @@
-import React, { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { FaInstagram,FaPhoneAlt, FaMapMarkerAlt, FaEnvelope } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
+// 1. Removed brand icons from lucide-react
+import { Menu, X, Heart, ArrowUpRight } from "lucide-react"; 
+// 2. Added FaInstagram, FaTwitter, FaFacebook to react-icons
+import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaInstagram, FaTwitter, FaFacebook } from "react-icons/fa"; 
 import ScrollToTopButton from "./ScrollToTopButton";
 
+// ==========================================
+// 1. THE HIGH-OCTANE HEADER (NAV)
+// ==========================================
 const Nav = () => {
-  const [open, setOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const nav = useNavigate();
 
-  const linkClass = ({ isActive }) =>
-    isActive
-      ? "text-[#C2410C] font-medium"
-      : "text-[#1F2933] hover:text-[#C2410C] transition";
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: "About", path: "/about" },
+    { name: "Adopt", path: "/adopt" },
+    { name: "Volunteer", path: "/volunteer" },
+    { name: "Awareness", path: "/awareness" },
+    { name: "Support", path: "/doctors" },
+  ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#FAF7F2] border-b border-[#E7E1D8]">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-
-        {/* Brand */}
-        <NavLink to="/" className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full border border-[#E7E1D8] bg-white flex items-center justify-center">
-            <img
-              src="/icons/logo.jpg"
-              alt="Tails of Bijapur"
-              className="w-7 h-7 object-contain"
-            />
+    <nav 
+      className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${
+        isScrolled ? "py-4 bg-[#0A0A0A]/90 backdrop-blur-xl border-b border-white/10" : "py-8 bg-transparent"
+      }`}
+    >
+      <div className="max-w-[1400px] mx-auto px-6 flex justify-between items-center">
+        
+{/* LOGO: ARCHITECTURAL MONOGRAM */}
+        <Link to="/" className="group flex items-center gap-4 z-[101]">
+          {/* Geometric Box */}
+          <div className="relative w-12 h-12 flex items-center justify-center border border-white/20 bg-[#050505] overflow-hidden group-hover:border-orange-500 transition-colors duration-500">
+            {/* Hover Fill Effect */}
+            <div className="absolute inset-0 bg-orange-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+            <span className="font-black text-2xl tracking-tighter text-white relative z-10 group-hover:text-orange-500 transition-colors">
+              Tb<span className="text-orange-500 group-hover:text-white">.</span>
+            </span>
+            {/* Brutalist Corner Accents */}
+            <div className="absolute top-0 left-0 w-2 h-2 bg-orange-500" />
+            <div className="absolute bottom-0 right-0 w-2 h-2 bg-orange-500" />
           </div>
-          <span className="text-lg font-semibold tracking-tight text-[#1F2933]">
-            Tails of Bijapur
-          </span>
-        </NavLink>
+          
+          {/* Typography */}
+          <div className="flex flex-col justify-center">
+            <span className="text-2xl font-black uppercase tracking-tighter leading-none text-white mb-1">
+              Tails of
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] leading-none text-gray-500 group-hover:text-orange-400 transition-colors">
+              Bijapur
+            </span>
+          </div>
+        </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8 text-sm">
-          <NavLink to="/about" className={linkClass}>About</NavLink>
-          <NavLink to="/adopt" className={linkClass}>Adopt</NavLink>
-          <NavLink to="/volunteer" className={linkClass}>Volunteer</NavLink>
-          <NavLink to="/awareness" className={linkClass}>Awareness</NavLink>
-          {/*<NavLink to="/surrender" className={linkClass}>Rescue</NavLink> */}
-          <NavLink to="/contact" className={linkClass}>Contact</NavLink>
-          <NavLink to="/doctors" className={linkClass}>Veterinary Support</NavLink>
+        {/* DESKTOP NAV */}
+        <div className="hidden md:flex items-center gap-8">
+          <div className="flex gap-8">
+            {navLinks.map((link) => (
+              <NavLink 
+                key={link.name} 
+                to={link.path}
+                className={({ isActive }) => `text-xs font-black uppercase tracking-[0.2em] transition-colors ${isActive ? 'text-orange-500' : 'text-gray-300 hover:text-orange-500'}`}
+              >
+                {link.name}
+              </NavLink>
+            ))}
+          </div>
 
-          <NavLink
-            to="/contact"
-            className="ml-2 px-4 py-2 text-sm font-medium text-white bg-[#C2410C] rounded-md hover:bg-[#9A3412] transition"
+          <div className="h-6 w-[1px] bg-white/20 mx-2" />
+
+          {/* EMERGENCY STATUS */}
+          <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 cursor-help" title="Rescue Team is currently on ground">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white">Rescue Active</span>
+          </div>
+
+          <button 
+            onClick={() => nav("/contact")}
+            className="px-8 py-3 bg-orange-600 hover:bg-white hover:text-black text-white text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-[0_0_20px_rgba(234,88,12,0.3)] hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"
           >
-            Report an Animal
-          </NavLink>
+            Report Animal
+          </button>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="md:hidden text-[#1F2933]"
-        >
-          <span className="sr-only">Toggle menu</span>
-          ☰
+        {/* MOBILE TOGGLE */}
+        <button className="md:hidden text-white relative z-[101]" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <X size={30} /> : <Menu size={30} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
-      {open && (
-        <div className="md:hidden bg-[#FAF7F2] border-t border-[#E7E1D8] px-6 py-4 space-y-4 text-sm">
-          {["About","Adopt","Volunteer","Awareness","Contact","Veterinary Support"].map((item) => (
-            <NavLink
-              key={item}
-              to={`/${item.toLowerCase().replace(" ", "-")}`}
-              onClick={() => setOpen(false)}
-              className={linkClass}
-            >
-              {item}
-            </NavLink>
-          ))}
-        </div>
-      )}
+      {/* MOBILE MENU */}
+      <div className={`fixed inset-0 bg-[#0A0A0A] flex flex-col items-center justify-center gap-8 z-[100] transition-transform duration-500 md:hidden ${isOpen ? "translate-y-0" : "-translate-y-full"}`}>
+        {navLinks.map((link) => (
+          <NavLink 
+            key={link.name} 
+            to={link.path} 
+            onClick={() => setIsOpen(false)}
+            className={({ isActive }) => `text-4xl font-black uppercase tracking-tighter transition-colors ${isActive ? 'text-orange-500' : 'text-white hover:text-orange-500'}`}
+          >
+            {link.name}
+          </NavLink>
+        ))}
+        <button 
+          onClick={() => { nav("/contact"); setIsOpen(false); }}
+          className="mt-8 px-12 py-4 bg-orange-600 text-white font-black uppercase tracking-widest rounded-full"
+        >
+          Report Animal
+        </button>
+      </div>
     </nav>
   );
 };
 
 
-
+// ==========================================
+// 2. THE STREET POSTER FOOTER
+// ==========================================
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="relative bg-[#FAF7F2] border-t border-[#E7E1D8] mt-24">
-
-      {/* Soft top curve accent */}
-      <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-[#F3EDE3] to-transparent pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
-
-        {/* Brand Section */}
-        <div className="space-y-5">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full border border-[#E7E1D8] bg-white flex items-center justify-center shadow-sm">
-              <img
-                src="/icons/logo.jpg"
-                alt="Tails of Bijapur"
-                className="w-7 h-7 object-contain"
-              />
-            </div>
-            <h2 className="text-xl font-semibold text-[#1F2933]">
-              Tails of Bijapur
+    <footer className="bg-[#050505] pt-32 pb-10 px-6 border-t border-white/10 mt-auto">
+      <div className="max-w-[1400px] mx-auto">
+        
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-16 mb-32">
+          
+          {/* BIG CALL TO ACTION */}
+          <div className="md:col-span-7">
+            <h2 className="text-6xl md:text-[6vw] font-black tracking-tighter leading-[0.85] text-white mb-10">
+              JOIN THE <br /> <span className="text-orange-600 italic">REVOLUTION.</span>
             </h2>
+            <p className="text-gray-400 text-2xl max-w-lg mb-12 italic leading-snug">
+              &quot;We don&apos;t just feed dogs. We give them back the dignity the world took away.&quot;
+            </p>
+            <div className="flex gap-4">
+               {/* 3. Switched mapped array to use React Icons */}
+               {[FaInstagram, FaTwitter, FaFacebook].map((Icon, i) => (
+                 <a key={i} href="https://www.instagram.com/tailsofbijapur" target="_blank" rel="noreferrer" className="p-5 border-2 border-white/20 rounded-full text-white hover:bg-white hover:text-black hover:border-white transition-all hover:scale-110">
+                   <Icon size={24} />
+                 </a>
+               ))}
+            </div>
           </div>
 
-          <p className="text-sm text-[#4B5563] leading-relaxed max-w-xs">
-            A community-driven initiative dedicated to rescue, treatment,
-            rehabilitation, and responsible rehoming of animals in need.
-          </p>
-
-          <div className="flex items-center gap-3 pt-2">
-            <a
-              href="https://www.instagram.com/tailsofbijapur"
-              target="_blank"
-              rel="noreferrer"
-              className="w-10 h-10 flex items-center justify-center rounded-full border border-[#E7E1D8] text-[#C2410C] hover:bg-[#C2410C] hover:text-white transition duration-300"
-            >
-              <FaInstagram />
-            </a>
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div>
-          <h3 className="text-sm font-semibold text-[#1F2933] mb-5 uppercase tracking-wider">
-            Quick Links
-          </h3>
-          <ul className="space-y-3 text-sm">
-            <li><NavLink to="/" className="text-[#4B5563] hover:text-[#C2410C] transition">Home</NavLink></li>
-            <li><NavLink to="/about" className="text-[#4B5563] hover:text-[#C2410C] transition">About</NavLink></li>
-            <li><NavLink to="/why-adopt" className="text-[#4B5563] hover:text-[#C2410C] transition">Why Adopt</NavLink></li>
-            <li><NavLink to="/contact" className="text-[#4B5563] hover:text-[#C2410C] transition">Contact</NavLink></li>
-          </ul>
-        </div>
-
-        {/* Get Involved */}
-        <div>
-          <h3 className="text-sm font-semibold text-[#1F2933] mb-5 uppercase tracking-wider">
-            Get Involved
-          </h3>
-          <ul className="space-y-3 text-sm">
-            <li><NavLink to="/adopt" className="text-[#4B5563] hover:text-[#C2410C] transition">Adopt</NavLink></li>
-            <li><NavLink to="/volunteer" className="text-[#4B5563] hover:text-[#C2410C] transition">Volunteer</NavLink></li>
-            <li><NavLink to="/surrender" className="text-[#4B5563] hover:text-[#C2410C] transition">Surrender</NavLink></li>
-            <li><NavLink to="/doctors" className="text-[#4B5563] hover:text-[#C2410C] transition">Veterinary Support</NavLink></li>
-          </ul>
-        </div>
-
-        {/* Contact Info */}
-        <div>
-          <h3 className="text-sm font-semibold text-[#1F2933] mb-5 uppercase tracking-wider">
-            Contact
-          </h3>
-
-          <div className="space-y-4 text-sm text-[#4B5563]">
-            <div className="flex items-center gap-3">
-              <FaMapMarkerAlt className="text-[#C2410C]" />
-              <span>Bijapur, Karnataka</span>
+          {/* QUICK LINKS GRID */}
+          <div className="md:col-span-5 grid grid-cols-2 gap-12 pt-4">
+            <div className="space-y-8">
+              <p className="text-orange-600 font-black uppercase text-sm tracking-[0.3em] flex items-center gap-2">
+                <span className="w-2 h-2 bg-orange-600 rounded-full block"></span> Nav
+              </p>
+              <ul className="space-y-5 text-gray-400 font-bold uppercase text-lg tracking-tighter">
+                <li><Link to="/about" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Our Story</Link></li>
+                <li><Link to="/adopt" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Adoptable</Link></li>
+                <li><Link to="/why-adopt" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Why Adopt</Link></li>
+              </ul>
             </div>
-
-            <div className="flex items-center gap-3">
-              <FaPhoneAlt className="text-[#C2410C]" />
-              <span>+91 81230 38270</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <FaEnvelope className="text-[#C2410C]" />
-              <span>tailsofbijapur@gmail.com</span>
+            
+            <div className="space-y-8">
+              <p className="text-orange-600 font-black uppercase text-sm tracking-[0.3em] flex items-center gap-2">
+                <span className="w-2 h-2 bg-orange-600 rounded-full block"></span> Action
+              </p>
+              <ul className="space-y-5 text-gray-400 font-bold uppercase text-lg tracking-tighter">
+                <li><Link to="/donate" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Financial Aid</Link></li>
+                <li><Link to="/volunteer" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Volunteer Ground</Link></li>
+                <li><Link to="/contact" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Report Crisis</Link></li>
+              </ul>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-[#E7E1D8] text-center py-5 text-xs sm:text-sm text-[#6B7280] bg-[#F8F4EE]">
-        © {new Date().getFullYear()} Tails of Bijapur. All rights reserved.
-        <br />
-        Designed & developed by{" "}
-        <a
-          href="https://www.linkedin.com/in/ananya-kulkarni-234459370"
-          target="_blank"
-          rel="noreferrer"
-          className="underline hover:text-[#C2410C] transition"
-        >
-          Ananya Kulkarni
-        </a>
+        {/* BOTTOM STRIP */}
+        <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-[0.4em] flex flex-col md:flex-row gap-2">
+            <span>&copy; {currentYear} TAILS OF BIJAPUR &bull; FOR THE VOICELESS.</span>
+            <span>DESIGNED BY <a href="https://www.linkedin.com/in/ananya-kulkarni-234459370" target="_blank" rel="noreferrer" className="text-orange-600 hover:text-white transition-colors">ANANYA KULKARNI</a></span>
+          </div>
+          
+          <div className="flex gap-6 text-gray-500 text-xs">
+             <div className="flex items-center gap-2"><FaMapMarkerAlt /> Bijapur, Karnataka</div>
+             <div className="flex items-center gap-2"><FaPhoneAlt /> +91 81230 38270</div>
+             <div className="flex items-center gap-2"><FaEnvelope /> tailsofbijapur@gmail.com</div>
+          </div>
+        </div>
+
       </div>
     </footer>
   );
 };
 
 
-
+// ==========================================
+// 3. THE LAYOUT WRAPPER
+// ==========================================
 export default function Layout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#0A0A0A] text-[#F5F5F5]">
       <Nav />
-      <main className="flex-1 container mx-auto p-6">
+      {/* Removed container/p-6 margins to allow Home.js hero to go full screen */}
+      <main className="flex-grow w-full">
         <Outlet />
       </main>
       <ScrollToTopButton />

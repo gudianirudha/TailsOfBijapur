@@ -1,206 +1,187 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { MoveRight, Phone, Heart, Zap, Shield, Share2 } from "lucide-react";
 
 export default function Home() {
   const nav = useNavigate();
 
   return (
-    <div>
+    <div className="bg-[#0A0A0A] text-[#F5F5F5] selection:bg-orange-500 selection:text-white overflow-x-hidden">
+      
+      {/* ================= DYNAMIC HERO ================= */}
+      <section className="relative h-[95vh] flex items-center justify-center overflow-hidden px-4">
+        {/* Background Video with subtle zoom effect */}
+        <div className="absolute inset-0 z-0 scale-110 animate-pulse-slow">
+          <video
+            src="/videos/homehero.mp4"
+            autoPlay loop muted playsInline
+            className="w-full h-full object-cover opacity-40 grayscale"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0A0A]/60 to-[#0A0A0A]" />
+        </div>
 
-      {/* ================= HERO ================= */}
-      <section className="relative h-[520px] rounded-lg overflow-hidden">
-        <video
-          src="/videos/homehero.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        />
 
-        <div className="absolute inset-0 bg-black/40" />
 
-        <div className="relative flex items-center justify-center h-full">
-          <div className="text-center text-white p-6 max-w-2xl">
-            <h1 className="text-4xl font-bold mb-3">
-              Tails of Bijapur
-            </h1>
+        <div className="relative z-10 text-center max-w-6xl">
+          <h1 className="text-[12vw] md:text-[9vw] font-black leading-[0.85] tracking-tighter uppercase mb-8">
+            RESCUE. <br />
+            <span className="text-transparent stroke-text italic">REHAB.</span> <br />
+            <span className="text-orange-600">REHOME.</span>
+          </h1>
+          
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-12">
+            <button 
+              onClick={() => nav("/donate")}
+              className="group relative px-12 py-5 bg-white text-black font-black uppercase tracking-tighter overflow-hidden rounded-full transition-all hover:scale-105"
+            >
+              <span className="relative z-10 flex items-center gap-2 text-lg">
+                Save a Life <MoveRight size={20} className="group-hover:translate-x-2 transition-transform" />
+              </span>
+              <div className="absolute inset-0 bg-orange-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            </button>
+            
+            <button 
+              onClick={() => nav("/contact")}
+              className="px-12 py-5 border-2 border-white/20 rounded-full font-black uppercase tracking-tighter hover:bg-white/10 transition-all flex items-center gap-3"
+            >
+              <Phone size={20} className="text-orange-500" /> Report Emergency
+            </button>
+          </div>
+        </div>
+      </section>
 
-            <p className="text-lg mb-4">
-              Rescue. Rehabilitate. Rehome.
-            </p>
+      {/* ================= THE MARQUEE (Social Proof) ================= */}
+      <div className="bg-orange-600 py-4 border-y-2 border-black overflow-hidden whitespace-nowrap">
+        <div className="flex animate-marquee font-black uppercase text-2xl tracking-tighter italic text-black">
+          {[...Array(10)].map((_, i) => (
+            <span key={i} className="mx-8 flex items-center gap-4">
+              Tails of Bijapur <Zap fill="black" /> 500+ Rescued <Zap fill="black" /> Street Guardians <Zap fill="black" />
+            </span>
+          ))}
+        </div>
+      </div>
 
-            <p className="text-gray-200 mb-6">
-              A community-driven initiative working on the ground to rescue,
-              treat, and responsibly rehome animals in and around Bijapur.
-            </p>
+      {/* ================= BENTO GRID (The Work) ================= */}
+      <section className="py-32 px-4 md:px-12 max-w-screen-2xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          
+          {/* Main Story Card */}
+          <div className="md:col-span-8 bg-[#151515] rounded-[3rem] p-12 relative overflow-hidden group">
+            <div className="relative z-10">
+              <span className="text-orange-500 font-bold uppercase tracking-widest text-sm mb-4 block">/ Mission Critical</span>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-8 max-w-2xl">
+                WE FIGHT FOR THE <span className="text-white/30">ABANDONED.</span>
+              </h2>
+              <p className="text-gray-400 text-xl max-w-xl leading-relaxed">
+                When everyone else looks away, we step in. Our mobile unit covers 50km around Bijapur to provide instant trauma care.
+              </p>
+            </div>
+            {/* Background Texture/Image */}
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-orange-600/10 blur-[100px] rounded-full group-hover:bg-orange-600/20 transition-all" />
+          </div>
 
-            <div className="flex justify-center gap-3 flex-wrap">
-              <button
-                onClick={() => nav("/contact")}
-                className="px-4 py-2 bg-orange-500 text-white rounded"
-              >
-                Report an Animal
-              </button>
-
-              <button
-                onClick={() => nav("/adopt")}
-                className="px-4 py-2 bg-white text-black rounded"
-              >
-                Adopt
-              </button>
-
-              <button
-                onClick={() => nav("/donate")}
-                className="px-4 py-2 border border-white rounded"
-              >
-                Donate
-              </button>
+          {/* Impact Stats */}
+          <div className="md:col-span-4 grid grid-rows-2 gap-6">
+            <div className="bg-orange-600 rounded-[3rem] p-10 flex flex-col justify-end group cursor-pointer overflow-hidden">
+               <Share2 className="mb-auto text-black/50 group-hover:text-black transition-colors" size={32} />
+               <h3 className="text-6xl font-black text-black tracking-tighter">30+</h3>
+               <p className="text-black font-bold uppercase text-sm tracking-widest">Active Guardians</p>
+            </div>
+            <div className="bg-[#151515] border border-white/10 rounded-[3rem] p-10 flex flex-col justify-end">
+               <Shield className="mb-auto text-orange-500" size={32} />
+               <h3 className="text-6xl font-black text-white tracking-tighter">100%</h3>
+               <p className="text-gray-500 font-bold uppercase text-sm tracking-widest">Transparency</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= INTRO ================= */}
-      <section className="mt-14 py-12 bg-[#FAF7F2] rounded-lg">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-semibold mb-4">
-            Who We Are
+      {/* ================= THE ACTION GRID (Broken Layout) ================= */}
+      <section className="py-24 px-4 md:px-12 bg-white text-black rounded-t-[5rem]">
+        <div className="flex flex-col md:flex-row justify-between items-start mb-20 gap-8">
+          <h2 className="text-7xl md:text-[10vw] font-black leading-[0.8] tracking-tighter uppercase">
+            The <br /> Ground <br /> <span className="text-orange-600">Reality.</span>
           </h2>
+          <div className="max-w-md">
+            <p className="text-2xl font-bold leading-tight mb-6 italic">
+              "Action is the only antidote to the suffering we see every day on these streets."
+            </p>
+            <div className="h-2 w-24 bg-orange-600" />
+          </div>
+        </div>
 
-          <p className="text-[#4B5563] text-lg leading-relaxed">
-            Tails of Bijapur is a collective of volunteers, caregivers, and
-            veterinarians working together to ensure injured and abandoned
-            animals receive timely medical care, dignity, and a chance at a safe life.
-          </p>
+        <div className="grid md:grid-cols-3 gap-12">
+          <ActionCard 
+            step="01" 
+            title="Crisis Call" 
+            text="Our network alerts us to injured dogs, abandoned pups, or starving families." 
+          />
+          <ActionCard 
+            step="02" 
+            title="Surgical Intervention" 
+            text="Immediate specialized treatment for fractures, tumors, and viral cases." 
+          />
+          <ActionCard 
+            step="03" 
+            title="Life Beyond" 
+            text="Fostering in local homes until we find a permanent family across India." 
+          />
         </div>
       </section>
 
-      {/* ================= WHAT WE DO ================= */}
-      <section className="mt-14 py-10 bg-white rounded-lg">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold">What We Do</h2>
-          <p className="text-lg text-gray-700">On the ground. Every day.</p>
+      {/* ================= FOOTER / FINAL CALL ================= */}
+      <footer className="bg-white text-black py-20 px-4 md:px-12 border-t border-gray-100">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-10">
+          <div className="text-center md:text-left">
+             <p className="text-sm font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Ready to Help?</p>
+             <h4 className="text-4xl md:text-6xl font-black tracking-tighter underline decoration-orange-600 underline-offset-8 transition-all hover:text-orange-600 cursor-pointer">
+               JOIN THE PACK
+             </h4>
+          </div>
+          <div className="flex gap-4">
+             {["Instagram", "Twitter", "Facebook"].map(link => (
+               <button key={link} className="px-6 py-2 border-2 border-black font-bold uppercase text-xs rounded-full hover:bg-black hover:text-white transition-all">
+                 {link}
+               </button>
+             ))}
+          </div>
         </div>
+      </footer>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 px-4">
-          {[
-            {
-              title: "Rescue",
-              text: "Responding to injured, abandoned, and emergency cases across the city."
-            },
-            {
-              title: "Rehabilitation",
-              text: "Providing medical treatment, recovery support, and post-care monitoring."
-            },
-            {
-              title: "Rehoming",
-              text: "Ensuring safe, responsible adoptions into loving homes."
-            }
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="bg-[#f9efe5] p-6 rounded-xl shadow text-center"
-            >
-              <h3 className="text-xl font-semibold mb-2 text-orange-500">
-                {item.title}
-              </h3>
-              <p className="text-gray-600">
-                {item.text}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* CSS for custom animations and stroke text */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .stroke-text {
+          -webkit-text-stroke: 2px white;
+          color: transparent;
+        }
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          animation: marquee 20s linear infinite;
+        }
+        .animate-pulse-slow {
+          animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .animate-bounce-slow {
+          animation: bounce 4s infinite;
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(-10%) rotate(-12deg); }
+          50% { transform: translateY(0) rotate(-12deg); }
+        }
+      `}} />
+    </div>
+  );
+}
 
-      {/* ================= SUCCESS STORIES ================= */}
-      <section className="mt-14 py-10 bg-[#FAF7F2] rounded-lg">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold">Stories of Recovery</h2>
-          <p className="text-lg text-gray-700">
-            Small victories that keep us going
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 px-4">
-          {[
-            {
-              title: "Buddy",
-              desc: "Rescued after a road accident and now thriving in a forever home."
-            },
-            {
-              title: "Chutki",
-              desc: "Treated, fostered, and adopted after months of recovery."
-            },
-            {
-              title: "A Cat Family",
-              desc: "Rescued together and rehomed without being separated."
-            }
-          ].map((story) => (
-            <div key={story.title} className="bg-white p-4 rounded-xl shadow">
-              <div className="h-40 bg-gray-200 rounded mb-4"></div>
-              <h3 className="font-semibold">{story.title}</h3>
-              <p className="text-sm text-gray-600">{story.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ================= IMPACT ================= */}
-      <section className="mt-14 py-10 bg-white rounded-lg">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold">Our Impact</h2>
-          <p className="text-lg text-gray-700">Measured with care</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 px-4">
-          {[
-            ["50+", "Animals Rescued"],
-            ["30+", "Active Volunteers"],
-            ["10+", "Successful Adoptions"],
-            ["2+", "Vaccination Drives"]
-          ].map(([num, label]) => (
-            <div
-              key={label}
-              className="p-6 bg-[#f9efe5] rounded-xl shadow text-center"
-            >
-              <div className="text-3xl text-orange-500 font-bold">
-                {num}
-              </div>
-              <div className="text-gray-700">{label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ================= CTA ================= */}
-      <section className="mt-14 py-14 bg-orange-500 rounded-lg text-center text-white">
-        <h2 className="text-3xl font-bold mb-3">
-          Every Life Matters
-        </h2>
-
-        <p className="max-w-2xl mx-auto mb-6">
-          Whether it’s reporting an injured animal, volunteering your time,
-          or supporting treatment costs, every action makes a difference.
-        </p>
-
-        <div className="flex justify-center gap-4 flex-wrap">
-          <button
-            onClick={() => nav("/volunteer")}
-            className="px-5 py-2 bg-white text-black rounded"
-          >
-            Volunteer
-          </button>
-
-          <button
-            onClick={() => nav("/donate")}
-            className="px-5 py-2 border border-white rounded"
-          >
-            Donate
-          </button>
-        </div>
-      </section>
-
+function ActionCard({ step, title, text }) {
+  return (
+    <div className="group border-t-2 border-black pt-8 hover:border-orange-600 transition-colors">
+      <span className="text-orange-600 font-black text-xl mb-4 block group-hover:translate-x-4 transition-transform">{step}</span>
+      <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">{title}</h3>
+      <p className="text-gray-600 font-medium leading-relaxed">{text}</p>
     </div>
   );
 }
