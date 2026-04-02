@@ -1,9 +1,91 @@
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Syringe, ShieldAlert, ShieldCheck, HeartPulse, Utensils, MapPin, Droplets, Clock, Users, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTextLayout } from "../hooks/useTextLayout"; // <-- IMPORT PRETEXT HOOK
 
+// ================= SMART EXPANDING PROTOCOL CARD =================
+// ================= SMART EXPANDING PROTOCOL CARD =================
+function SmartProtocolCard({ item }) {
+  const containerRef = useRef(null);
+  const [width, setWidth] = useState(0);
+
+  // 1. Observe exact pixel width continuously
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setWidth(entries[0].contentRect.width);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // 2. Pretext Math: Calculate height for the hidden 'detail' text
+  // text-sm (14px), font-medium (500), leading-relaxed (1.625 multiplier = 22.75px)
+  const { height: targetHeight } = useTextLayout(
+    item.detail, 
+    "500 14px sans-serif", 
+    width, 
+    22.75 
+  );
+
+  return (
+    <div className="bg-[#111] p-8 rounded-3xl border-t-2 border-transparent hover:border-orange-600 transition-colors group flex flex-col h-full min-h-[160px]">
+      
+      <div className="flex gap-6 items-start h-full w-full">
+        <div className="bg-white/5 p-4 rounded-xl text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-colors shrink-0">
+          {item.icon}
+        </div>
+        
+        {/* We make this container a flex-col that takes full height */}
+        <div className="flex flex-col h-full w-full">
+          <p className="text-white font-bold leading-relaxed pt-2">
+            {item.text}
+          </p>
+          
+          {/* mt-auto pushes this container perfectly to the bottom, aligning them across the grid */}
+          <div ref={containerRef} className="w-full mt-auto">
+            
+            {/* 3. The Dynamic Reflow Container */}
+            <div 
+              className="overflow-hidden transition-[height,opacity] duration-500 ease-in-out opacity-0 group-hover:opacity-100"
+              style={{ height: 0 }}
+              ref={(el) => {
+                if (el) {
+                  const parent = el.closest('.group');
+                  if (parent) {
+                    // Exact CSS Math: mt-3 (12px) + pt-3 (12px) + border (1px) + 5px buffer = 30px
+                    parent.addEventListener('mouseenter', () => el.style.height = `${targetHeight + 30}px`); 
+                    parent.addEventListener('mouseleave', () => el.style.height = '0px');
+                  }
+                }
+              }}
+            >
+              <p className="text-gray-400 text-sm font-medium leading-relaxed mt-3 border-t border-white/10 pt-3">
+                {item.detail}
+              </p>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  );
+}
+
+// ================= MAIN COMPONENT =================
 export default function Awareness() {
   const nav = useNavigate();
+
+  // Enhanced data with the "Why" behind the rules
+  const feedingProtocols = [
+    { icon: <MapPin />, text: "Choose fixed feeding locations away from heavy traffic.", detail: "This prevents tragic accidents and trains the dogs to wait safely in designated zones rather than chasing moving vehicles." },
+    { icon: <ShieldCheck />, text: "Maintain absolute cleanliness after feeding is complete.", detail: "Leaving leftover food attracts pests and creates a public nuisance, which is the primary cause of conflict between feeders and local residents." },
+    { icon: <Droplets />, text: "Provide fresh, clean water daily in designated bowls.", detail: "Hydration is critical, especially during Indian summers. Clean bowls prevent waterborne diseases and dangerous mosquito breeding." },
+    { icon: <Utensils />, text: "Avoid blocking entrances, gates, or public pathways.", detail: "Respecting public spaces ensures pedestrians can move freely, fostering community support rather than hostility toward street dogs." },
+    { icon: <Users />, text: "Coordinate respectfully with local residents and neighbors.", detail: "Building a positive, polite relationship with neighbors diffuses tension and creates a safe, protected environment for the animals." },
+    { icon: <Clock />, text: "Keep feeding timings consistent to establish a routine.", detail: "Dogs thrive on routine. Consistent timings prevent them from wandering far and significantly reduces anxiety-driven behavior." },
+  ];
 
   return (
     <div className="bg-[#0A0A0A] text-[#F5F5F5] selection:bg-orange-500 selection:text-white min-h-screen pb-24 overflow-x-hidden">
@@ -11,7 +93,7 @@ export default function Awareness() {
       {/* ================= HERO SECTION ================= */}
       <section className="pt-40 pb-20 px-4 md:px-12 max-w-[1400px] mx-auto text-center">
         <div className="flex flex-col items-center justify-center">
-          <span className="text-orange-500 font-bold uppercase tracking-[0.3em] text-sm mb-6 block flex items-center gap-3">
+          <span className="text-orange-500 font-bold uppercase tracking-[0.3em] text-sm mb-6 flex items-center justify-center gap-3 w-full">
             <div className="w-2 h-2 bg-orange-600 rounded-full animate-ping" /> Public Health & Harmony
           </span>
           <h1 className="text-6xl md:text-[8vw] font-black uppercase tracking-tighter leading-[0.85] mb-8">
@@ -93,7 +175,6 @@ export default function Awareness() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="group relative aspect-[4/3] rounded-3xl overflow-hidden bg-gray-200">
-                 {/* Placeholder for actual drive photos - using a solid color/gradient fallback for now */}
                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black mix-blend-multiply opacity-50 group-hover:opacity-0 transition-opacity duration-500 z-10" />
                  <img 
                    src={`/images/awareness/drive-${i}.jpg`} 
@@ -117,27 +198,14 @@ export default function Awareness() {
             FEEDING <span className="text-orange-600">PROTOCOL.</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto font-medium leading-relaxed">
-            Feeding street dogs must be structured and hygienic to maintain peace within the community while ensuring animals receive proper care.
+            Feeding street dogs must be structured and hygienic to maintain peace within the community while ensuring animals receive proper care. Hover over each protocol to learn why it matters.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { icon: <MapPin />, text: "Choose fixed feeding locations away from heavy traffic." },
-            { icon: <ShieldCheck />, text: "Maintain absolute cleanliness after feeding is complete." },
-            { icon: <Droplets />, text: "Provide fresh, clean water daily in designated bowls." },
-            { icon: <Utensils />, text: "Avoid blocking entrances, gates, or public pathways." },
-            { icon: <Users />, text: "Coordinate respectfully with local residents and neighbors." },
-            { icon: <Clock />, text: "Keep feeding timings consistent to establish a routine." },
-          ].map((item, index) => (
-            <div key={index} className="bg-[#111] p-8 rounded-3xl border-t-2 border-transparent hover:border-orange-600 transition-colors group flex gap-6 items-start">
-              <div className="bg-white/5 p-4 rounded-xl text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-colors shrink-0">
-                {item.icon}
-              </div>
-              <p className="text-gray-300 font-medium leading-relaxed pt-2">
-                {item.text}
-              </p>
-            </div>
+          {/* Mapping through our new Pretext-powered Smart Cards */}
+          {feedingProtocols.map((item, index) => (
+            <SmartProtocolCard key={index} item={item} />
           ))}
         </div>
       </section>
