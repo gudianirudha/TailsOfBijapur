@@ -16,23 +16,13 @@ const successStories = [
     colSpan: "md:col-span-2", 
   },
   {
-    id: "CASE-002",
-    name: "Golgumbaz Rescue",
-    status: "End of Watch",
-    statusColor: "text-red-500",
-    intel: "Brutally attacked with heavy stones. Rushed to the government hospital for emergency trauma care and placed in foster care.",
-    outcome: "He fought with all his strength but tragically succumbed to his injuries. A heartbreaking reminder that our street friends need protection, not cruelty.",
-    image: "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=1000&auto=format&fit=crop", 
-    colSpan: "md:col-span-1",
-  },
-  {
     id: "CASE-003",
     name: "The Mother",
     status: "Recovered & Spayed",
     statusColor: "text-orange-500",
     intel: "Found pregnant and in severe medical distress. Emergency surgery was performed. Tragically, the puppies could not be saved.",
     outcome: "The mother fully recovered, was safely neutered, and is now living comfortably. A testament to why neutering is critical to preventing suffering.",
-    image: "https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=1000&auto=format&fit=crop", 
+    image: "https://res.cloudinary.com/ds53m10cl/image/upload/v1775289465/WhatsApp_Image_2026-04-04_at_1.27.15_PM_pkhvrn.jpg?q=80&w=1000&auto=format&fit=crop", 
     colSpan: "md:col-span-1",
   },
   {
@@ -42,7 +32,7 @@ const successStories = [
     statusColor: "text-blue-500", 
     intel: "A senior dog and a puppy were left paralyzed after a tragic accident. They were found surviving on the streets against all odds, enduring immense pain and fear.",
     outcome: "Safely evacuated and transported to the Bark Club NGO in Nagpur. They are now receiving specialized medical treatment, mobility care, and a safe haven.",
-    image: "https://images.unsplash.com/photo-1534361960057-19889db9621e?q=80&w=1000&auto=format&fit=crop", 
+    image: "https://res.cloudinary.com/ds53m10cl/image/upload/v1775289608/WhatsApp_Image_2026-04-04_at_1.29.46_PM_kvw2y2.jpg?q=80&w=1000&auto=format&fit=crop", 
     colSpan: "md:col-span-2", 
   }
 ];
