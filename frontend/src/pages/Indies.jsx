@@ -13,7 +13,7 @@ export default function Indies() {
         {/* Massive Background Image */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=2000&auto=format&fit=crop" 
+            src="https://plus.unsplash.com/premium_photo-1661892088256-0a17130b3d0d?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?q=80&w=2000&auto=format&fit=crop" 
             alt="Majestic Indian Dog"
             className="w-full h-full object-cover grayscale opacity-50"
           />
@@ -68,7 +68,7 @@ export default function Indies() {
         {/* Feature 1: Image Left, Text Right */}
         <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-center">
           <div className="relative h-[500px] rounded-[3rem] overflow-hidden group">
-            <img src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=1000&auto=format&fit=crop" alt="Indie Dog Running" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" />
+            <img src="https://images.unsplash.com/photo-1537267826152-8e218e860755?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?q=80&w=1000&auto=format&fit=crop" alt="Indie Dog Running" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 bg-orange-600/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </div>
           <div className="space-y-6">
@@ -94,7 +94,7 @@ export default function Indies() {
             </p>
           </div>
           <div className="relative h-[500px] rounded-[3rem] overflow-hidden group order-1 md:order-2">
-            <img src="https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=1000&auto=format&fit=crop" alt="Indie Dog Resting" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" />
+            <img src="https://images.unsplash.com/photo-1641900007951-802a4fa275dd?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?q=80&w=1000&auto=format&fit=crop" alt="Indie Dog Resting" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 bg-orange-600/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </div>
         </div>
@@ -102,7 +102,8 @@ export default function Indies() {
         {/* Feature 3: Image Left, Text Right */}
         <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-center">
           <div className="relative h-[500px] rounded-[3rem] overflow-hidden group">
-            <img src="https://images.unsplash.com/photo-1534361960057-19889db9621e?q=80&w=1000&auto=format&fit=crop" alt="Indie Dog Portrait" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" />
+            <img src="https://images.unsplash.com/photo-1613205286476-9c2450122546?q=80&w=1284&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?q=80&w=1000&auto=format&fit=crop"
+            alt="Indie Dog Portrait" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 bg-orange-600/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </div>
           <div className="space-y-6">
