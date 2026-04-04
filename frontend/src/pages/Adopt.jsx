@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Camera, CheckCircle2, AlertCircle, X, Phone, MessageCircle, MapPin, Info } from "lucide-react";
 
 // ================= MASONRY GRID COMPONENT =================
-// This dynamically packs columns based on screen width
 function MasonryPuppyGrid({ puppies, onSelect }) {
   const containerRef = useRef(null);
-  const [columns, setColumns] = useState(3); // Default to 3 cols
+  const [columns, setColumns] = useState(3);
 
-  // Responsive column calculation
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -21,7 +19,6 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
     return () => observer.disconnect();
   }, []);
 
-  // Split puppies into column arrays
   const colArrays = Array.from({ length: columns }, () => []);
   puppies.forEach((puppy, i) => {
     colArrays[i % columns].push(puppy);
@@ -35,14 +32,12 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
             <div
               key={puppy._id}
               onClick={() => onSelect(puppy)}
-              // Note: No aspect ratio forced here. It conforms to the image height.
               className="group cursor-pointer relative rounded-[2rem] overflow-hidden bg-[#151515] border border-white/5 hover:border-orange-500/50 transition-colors"
             >
               {puppy.imageUrl ? (
                 <img
                   src={puppy.imageUrl}
                   alt={puppy.name}
-                  // We let the image determine the height natively
                   className="w-full h-auto object-cover grayscale opacity-80 group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700 ease-out"
                   onError={(e) => { e.target.style.display='none' }}
                 />
@@ -50,10 +45,8 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
                 <div className="w-full aspect-square flex items-center justify-center text-white/10"><Camera size={48}/></div>
               )}
               
-              {/* Overlay Gradient for Text Readability */}
               <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/80 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
               
-              {/* Card Content - Anchored to bottom */}
               <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col justify-end">
                 <div className="flex justify-between items-end mb-4">
                   <div>
@@ -69,7 +62,6 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
                   </div>
                 </div>
 
-                {/* Pretext-ready Expandable Description (Expands on hover) */}
                 <div className="overflow-hidden h-0 opacity-0 group-hover:h-auto group-hover:opacity-100 transition-all duration-500">
                   <p className="text-gray-400 text-sm font-medium leading-relaxed pt-4 border-t border-white/10 line-clamp-3">
                     {puppy.description || "A resilient soul waiting for a forever home. Click to view full medical and rescue details."}
@@ -78,7 +70,6 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
                     Review Intel <AlertCircle size={14} className="text-orange-500"/>
                   </span>
                 </div>
-
               </div>
             </div>
           ))}
@@ -87,7 +78,6 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
     </div>
   );
 }
-
 
 // ================= MAIN COMPONENT =================
 export default function Adopt() {
@@ -105,6 +95,9 @@ export default function Adopt() {
   const [approvedPuppies, setApprovedPuppies] = useState([]);
   const [selectedPuppy, setSelectedPuppy] = useState(null);
   const fileInputRef = useRef(null);
+
+  // ================= STRICT API URL =================
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // ================= LOGIC =================
   function handleChange(e) {
@@ -143,7 +136,8 @@ export default function Adopt() {
       Object.keys(form).forEach(key => payload.append(key, key === 'phone' ? normalizePhone(form[key]) : form[key]));
       payload.append('image', imageFile);
 
-      const res = await fetch('http://localhost:4000/api/adopt-submissions', {
+      // FIX 1: Use dynamic API URL
+      const res = await fetch(`${API_URL}/api/adopt-submissions`, {
         method: 'POST',
         body: payload,
       });
@@ -168,11 +162,12 @@ export default function Adopt() {
   }
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/approved-puppies")
+    // FIX 2: Use dynamic API URL
+    fetch(`${API_URL}/api/approved-puppies`)
       .then(res => res.json())
       .then(data => setApprovedPuppies(data))
       .catch(err => console.error("Failed to fetch puppies", err));
-  }, []);
+  }, [API_URL]);
 
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === "Escape") setSelectedPuppy(null); };
@@ -363,7 +358,6 @@ export default function Adopt() {
              <p className="text-gray-600 mt-2 font-medium">Check back soon or submit a rescue above.</p>
           </div>
         ) : (
-          /* Replace old grid with our new Masonry Layout */
           <MasonryPuppyGrid puppies={approvedPuppies} onSelect={setSelectedPuppy} />
         )}
       </section>
