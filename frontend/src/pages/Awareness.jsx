@@ -1,15 +1,13 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Syringe, ShieldAlert, ShieldCheck, HeartPulse, Utensils, MapPin, Droplets, Clock, Users, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useTextLayout } from "../hooks/useTextLayout"; // <-- IMPORT PRETEXT HOOK
+import { useTextLayout } from "../hooks/useTextLayout"; 
 
-// ================= SMART EXPANDING PROTOCOL CARD =================
 // ================= SMART EXPANDING PROTOCOL CARD =================
 function SmartProtocolCard({ item }) {
   const containerRef = useRef(null);
   const [width, setWidth] = useState(0);
 
-  // 1. Observe exact pixel width continuously
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -19,8 +17,6 @@ function SmartProtocolCard({ item }) {
     return () => observer.disconnect();
   }, []);
 
-  // 2. Pretext Math: Calculate height for the hidden 'detail' text
-  // text-sm (14px), font-medium (500), leading-relaxed (1.625 multiplier = 22.75px)
   const { height: targetHeight } = useTextLayout(
     item.detail, 
     "500 14px sans-serif", 
@@ -30,22 +26,17 @@ function SmartProtocolCard({ item }) {
 
   return (
     <div className="bg-[#111] p-8 rounded-3xl border-t-2 border-transparent hover:border-orange-600 transition-colors group flex flex-col h-full min-h-[160px]">
-      
       <div className="flex gap-6 items-start h-full w-full">
         <div className="bg-white/5 p-4 rounded-xl text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-colors shrink-0">
           {item.icon}
         </div>
         
-        {/* We make this container a flex-col that takes full height */}
         <div className="flex flex-col h-full w-full">
           <p className="text-white font-bold leading-relaxed pt-2">
             {item.text}
           </p>
           
-          {/* mt-auto pushes this container perfectly to the bottom, aligning them across the grid */}
           <div ref={containerRef} className="w-full mt-auto">
-            
-            {/* 3. The Dynamic Reflow Container */}
             <div 
               className="overflow-hidden transition-[height,opacity] duration-500 ease-in-out opacity-0 group-hover:opacity-100"
               style={{ height: 0 }}
@@ -53,7 +44,6 @@ function SmartProtocolCard({ item }) {
                 if (el) {
                   const parent = el.closest('.group');
                   if (parent) {
-                    // Exact CSS Math: mt-3 (12px) + pt-3 (12px) + border (1px) + 5px buffer = 30px
                     parent.addEventListener('mouseenter', () => el.style.height = `${targetHeight + 30}px`); 
                     parent.addEventListener('mouseleave', () => el.style.height = '0px');
                   }
@@ -64,11 +54,9 @@ function SmartProtocolCard({ item }) {
                 {item.detail}
               </p>
             </div>
-            
           </div>
         </div>
       </div>
-      
     </div>
   );
 }
@@ -77,7 +65,6 @@ function SmartProtocolCard({ item }) {
 export default function Awareness() {
   const nav = useNavigate();
 
-  // Enhanced data with the "Why" behind the rules
   const feedingProtocols = [
     { icon: <MapPin />, text: "Choose fixed feeding locations away from heavy traffic.", detail: "This prevents tragic accidents and trains the dogs to wait safely in designated zones rather than chasing moving vehicles." },
     { icon: <ShieldCheck />, text: "Maintain absolute cleanliness after feeding is complete.", detail: "Leaving leftover food attracts pests and creates a public nuisance, which is the primary cause of conflict between feeders and local residents." },
@@ -143,8 +130,8 @@ export default function Awareness() {
         </div>
       </section>
 
-      {/* ================= IMPACT & HISTORY ================= */}
-      <section className="py-24 px-4 md:px-12 bg-white text-black rounded-[3rem] md:rounded-[5rem] mx-4 md:mx-8 mb-24">
+      {/* ================= IMPACT & HISTORY (White Block) ================= */}
+      <section className="py-24 px-4 md:px-12 bg-white text-black rounded-[3rem] md:rounded-[5rem] mx-4 md:mx-8 mb-8">
         <div className="max-w-[1400px] mx-auto">
           
           <div className="grid lg:grid-cols-2 gap-16 mb-16">
@@ -172,16 +159,76 @@ export default function Awareness() {
           </div>
 
           {/* Image Gallery */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="group relative aspect-[4/3] rounded-3xl overflow-hidden bg-gray-200">
+          {/* Image Gallery */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775379160/vaccination_drive_2.jpg",
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775379161/WhatsApp_Image_2026-04-05_at_2.20.00_PM_ioxjri.jpg",
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775379664/vaccination_drive.jpg",
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775380155/vaccination_drive_4.jpg"
+            ].map((url, i) => (
+              <div key={i} className="group relative aspect-[4/3] rounded-3xl overflow-hidden bg-[#151515]">
                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black mix-blend-multiply opacity-50 group-hover:opacity-0 transition-opacity duration-500 z-10" />
                  <img 
-                   src={`/images/awareness/drive-${i}.jpg`} 
-                   alt={`Vaccination Drive ${i}`}
+                   src={url} 
+                   alt={`Vaccination Drive ${i + 1}`}
                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
                    onError={(e) => {
-                     e.target.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23111'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ea580c'%3EDRIVE ARCHIVE 0" + i + "%3C/text%3E%3C/svg%3E";
+                     e.target.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23111'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ea580c'%3EDRIVE ARCHIVE 0" + (i + 1) + "%3C/text%3E%3C/svg%3E";
+                   }}
+                 />
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ================= OUTREACH & EDUCATION (Dark Block - Mirrored Layout) ================= */}
+      <section className="py-24 px-4 md:px-12 bg-[#111] text-[#F5F5F5] border border-white/5 rounded-[3rem] md:rounded-[5rem] mx-4 md:mx-8 mb-24 relative overflow-hidden">
+        {/* Subtle background glow for the dark section */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600/5 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="max-w-[1400px] mx-auto relative z-10">
+          
+          <div className="grid lg:grid-cols-2 gap-16 mb-16">
+            <div>
+              <span className="text-orange-500 font-bold uppercase tracking-[0.3em] text-sm mb-4 block">/ Tactical Outreach</span>
+              <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-8">
+                RADIO & SCHOOL <br /> AWARENESS.
+              </h2>
+            </div>
+            
+            <div className="space-y-6 text-lg font-medium text-gray-400 leading-relaxed border-l-4 border-orange-500 pl-6 md:pl-10">
+              <p>
+                Reaching every corner of Vijayapura. We consistently utilize local radio networks (Radio Kendra) to broadcast critical animal welfare laws, emergency rescue protocols, and weekly adoption appeals to the masses.
+              </p>
+              <p>
+                Simultaneously, we recognize the next generation is our greatest asset. Our active school and college modules educate students directly on ethical treatment, safe interaction with street dogs, and basic first aid.
+              </p>
+              <p className="italic text-gray-500">
+                By integrating compassion into daily radio programming and classrooms, we are actively shifting the cultural narrative around street animals.
+              </p>
+            </div>
+          </div>
+
+          {/* Image Gallery */}
+          {/* Image Gallery */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775381336/WhatsApp_Image_2026-04-05_at_2.58.40_PM_bxjn84.jpg",
+              "YOUR_SECOND_IMAGE_URL_HERE",
+              "YOUR_THIRD_IMAGE_URL_HERE",
+              "YOUR_FOURTH_IMAGE_URL_HERE"
+            ].map((url, i) => (
+              <div key={i} className="group relative aspect-[4/3] rounded-3xl overflow-hidden bg-[#151515] border border-white/5">
+                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-transparent mix-blend-multiply opacity-50 group-hover:opacity-0 transition-opacity duration-500 z-10" />
+                 <img 
+                   src={url} 
+                   alt={`Awareness Drive ${i + 1}`}
+                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
+                   onError={(e) => {
+                     e.target.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23111'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ea580c'%3EOUTREACH 0" + (i + 1) + "%3C/text%3E%3C/svg%3E";
                    }}
                  />
               </div>
@@ -192,7 +239,7 @@ export default function Awareness() {
       </section>
 
       {/* ================= RESPONSIBLE FEEDING PROTOCOL ================= */}
-      <section className="py-24 px-4 md:px-12 max-w-[1400px] mx-auto">
+      <section className="py-24 px-4 md:px-12 max-w-[1400px] mx-auto border-t border-white/10">
         <div className="text-center mb-16">
           <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6">
             FEEDING <span className="text-orange-600">PROTOCOL.</span>
@@ -203,7 +250,6 @@ export default function Awareness() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Mapping through our new Pretext-powered Smart Cards */}
           {feedingProtocols.map((item, index) => (
             <SmartProtocolCard key={index} item={item} />
           ))}

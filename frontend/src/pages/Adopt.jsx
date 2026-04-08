@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
-import { Camera, CheckCircle2, AlertCircle, X, Phone, MessageCircle, MapPin, Info } from "lucide-react";
+import { Camera, CheckCircle2, AlertCircle, X, Phone, MessageCircle, MapPin, Info, PawPrint, ArrowRight } from "lucide-react";
 
 // ================= MASONRY GRID COMPONENT =================
 function MasonryPuppyGrid({ puppies, onSelect }) {
@@ -19,8 +19,11 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
     return () => observer.disconnect();
   }, []);
 
+  // Failsafe: Ensure puppies is always an array to prevent .forEach crashes
+  const safePuppies = Array.isArray(puppies) ? puppies : [];
   const colArrays = Array.from({ length: columns }, () => []);
-  puppies.forEach((puppy, i) => {
+  
+  safePuppies.forEach((puppy, i) => {
     colArrays[i % columns].push(puppy);
   });
 
@@ -96,9 +99,6 @@ export default function Adopt() {
   const [selectedPuppy, setSelectedPuppy] = useState(null);
   const fileInputRef = useRef(null);
 
-  // ================= STRICT API URL =================
-  const API_URL = import.meta.env.VITE_API_URL;
-
   // ================= LOGIC =================
   function handleChange(e) {
     const { name, value } = e.target;
@@ -116,36 +116,34 @@ export default function Adopt() {
     }
   }
 
+  // Failsafe: Added null check
   function normalizePhone(num) {
+    if (!num) return "";
     return num.replace(/\D/g, '');
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
-
     if (!imageFile) return setError('Please upload a picture of the puppy.');
     if (!form.location.trim()) return setError('Please provide a location.');
     if (!form.phone.trim()) return setError('Please provide a contact number.');
     if (!consent) return setError('Please confirm you agree to be contacted for verification.');
 
     setSubmitting(true);
-
     try {
       const payload = new FormData();
       Object.keys(form).forEach(key => payload.append(key, key === 'phone' ? normalizePhone(form[key]) : form[key]));
       payload.append('image', imageFile);
 
-      // FIX 1: Use dynamic API URL
-      const res = await fetch(`${API_URL}/api/adopt-submissions`, {
+      const res = await fetch('http://localhost:4000/api/adopt-submissions', {
         method: 'POST',
         body: payload,
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        console.log("SERVER RESPONSE:", text);
-        throw new Error("Submission failed");
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Submission failed due to network error.");
       }
 
       setSuccess('Mission accomplished. Submission received and pending review.');
@@ -161,13 +159,25 @@ export default function Adopt() {
     }
   }
 
+  // Failsafe API Fetching
   useEffect(() => {
-    // FIX 2: Use dynamic API URL
-    fetch(`${API_URL}/api/approved-puppies`)
-      .then(res => res.json())
-      .then(data => setApprovedPuppies(data))
-      .catch(err => console.error("Failed to fetch puppies", err));
-  }, [API_URL]);
+    fetch("http://localhost:4000/api/approved-puppies")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setApprovedPuppies(data);
+        } else {
+          setApprovedPuppies([]); // Prevent map crash if server returns object
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch puppies", err);
+        setApprovedPuppies([]); // Fallback to empty state
+      });
+  }, []);
 
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === "Escape") setSelectedPuppy(null); };
@@ -175,11 +185,12 @@ export default function Adopt() {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
+  // Failsafe: Ensure body scrolling is restored if component unmounts
   useEffect(() => {
     document.body.style.overflow = selectedPuppy ? "hidden" : "auto";
+    return () => { document.body.style.overflow = "auto"; };
   }, [selectedPuppy]);
 
-  // ================= RENDER =================
   return (
     <div className="bg-[#0A0A0A] text-[#F5F5F5] selection:bg-orange-500 selection:text-white min-h-screen pb-24">
       
@@ -209,11 +220,38 @@ export default function Adopt() {
         </div>
       </section>
 
+      {/* ================= INDIES PHILOSOPHY LINK ================= */}
+      <div className="max-w-[1400px] mx-auto px-4 md:px-12 mb-20">
+        <button 
+          onClick={() => nav("/indies")}
+          className="w-full bg-[#111] border border-white/10 hover:border-orange-500/50 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between group transition-all shadow-2xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-600/5 blur-3xl rounded-full group-hover:bg-orange-600/10 transition-colors" />
+
+          <div className="flex items-center gap-8 relative z-10">
+            <div className="bg-orange-600/20 p-5 rounded-2xl text-orange-500 group-hover:scale-110 transition-transform">
+              <PawPrint size={40} /> 
+            </div>
+            <div className="text-left">
+              <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white">
+                Why Choose an <span className="text-orange-500 text-transparent stroke-text-small">Indie?</span>
+              </h3>
+              <p className="text-gray-500 font-medium text-base md:text-lg mt-1">
+                Discover the resilience and unwavering loyalty of India's native masterpiece.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 md:mt-0 flex items-center gap-3 bg-white/5 group-hover:bg-orange-600 px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest text-white transition-all relative z-10">
+            Read Philosophy <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </div>
+        </button>
+      </div>
+
       {/* SPLIT SECTION: GUIDELINES & FORM */}
       <section className="py-12 px-4 md:px-12 max-w-[1400px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
           
-          {/* LEFT: Guidelines (Editorial Style) */}
           <div className="lg:col-span-5 space-y-12">
             <div>
               <h2 className="text-4xl font-black uppercase tracking-tighter mb-6">Protocol & <br /><span className="text-orange-600">Verification.</span></h2>
@@ -239,14 +277,12 @@ export default function Adopt() {
               ))}
             </div>
 
-            {/* Aesthetic Image box */}
             <div className="aspect-video w-full rounded-[2rem] overflow-hidden relative grayscale hover:grayscale-0 transition-all duration-700">
-               <img src="/images/adopt/banner.png?q=80&w=1000&auto=format&fit=crop" alt="Rescue dogs" className="w-full h-full object-cover" />
+               <img src="/images/adopt/banner.png" alt="Rescue dogs" className="w-full h-full object-cover" />
                <div className="absolute inset-0 bg-orange-600/20 mix-blend-overlay" />
             </div>
           </div>
 
-          {/* RIGHT: The Form (Dark Mode Terminal Style) */}
           <div id="submit" className="lg:col-span-7 bg-[#111] border border-white/10 p-8 md:p-12 rounded-[3rem] shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-orange-600/10 blur-[100px] rounded-full pointer-events-none" />
             
@@ -256,8 +292,6 @@ export default function Adopt() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-              
-              {/* Photo Upload */}
               <div className="p-6 border border-dashed border-white/20 rounded-2xl bg-[#151515] hover:border-orange-500/50 transition-colors">
                 <label className="flex flex-col items-center justify-center cursor-pointer">
                   {preview ? (
@@ -273,7 +307,6 @@ export default function Adopt() {
                 </label>
               </div>
 
-              {/* Grid Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Puppy Name</label>
@@ -301,7 +334,6 @@ export default function Adopt() {
                 </div>
               </div>
 
-              {/* Full Width Inputs */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Location <span className="text-orange-500">*</span></label>
                 <input name="location" value={form.location} onChange={handleChange} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="Area or Landmark in Bijapur" required />
@@ -332,7 +364,6 @@ export default function Adopt() {
                 {submitting ? 'Transmitting...' : 'Submit'}
               </button>
 
-              {/* Status Messages */}
               <div aria-live="polite" className="text-center font-bold text-sm uppercase tracking-widest">
                 {error && <p className="text-red-500 flex items-center justify-center gap-2"><AlertCircle size={16}/> {error}</p>}
                 {success && <p className="text-green-500 flex items-center justify-center gap-2"><CheckCircle2 size={16}/> {success}</p>}
@@ -362,19 +393,17 @@ export default function Adopt() {
         )}
       </section>
 
-      {/* ================= DETAILS MODAL ================= */}
+      {/* DETAILS MODAL */}
       {selectedPuppy && (
         <div 
           className="fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-[200] p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedPuppy(null); }}
         >
           <div className="bg-[#111] border border-white/10 rounded-[2rem] max-w-5xl w-full shadow-2xl relative overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
-            
             <button onClick={() => setSelectedPuppy(null)} className="absolute top-6 right-6 z-10 text-white hover:text-orange-500 bg-white/10 backdrop-blur p-2 rounded-full transition-colors border border-white/20">
               <X size={24} />
             </button>
 
-            {/* Left: Image (Constrained height to prevent massive scrolling) */}
             <div className="w-full md:w-1/2 h-[40vh] md:h-auto bg-[#050505]">
               {selectedPuppy.imageUrl ? (
                 <img src={selectedPuppy.imageUrl} alt={selectedPuppy.name} className="w-full h-full object-contain" />
@@ -383,7 +412,6 @@ export default function Adopt() {
               )}
             </div>
 
-            {/* Right: Data (Scrollable if necessary) */}
             <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col overflow-y-auto hide-scrollbar">
               <span className="inline-block px-3 py-1 bg-green-500/10 text-green-500 text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-4 border border-green-500/20 flex items-center gap-2">
                 <CheckCircle2 size={14} /> Verified Listing
@@ -423,7 +451,6 @@ export default function Adopt() {
                 </a>
               </div>
             </div>
-
           </div>
         </div>
       )}
@@ -432,6 +459,10 @@ export default function Adopt() {
       <style dangerouslySetInnerHTML={{ __html: `
         .stroke-text {
           -webkit-text-stroke: 2px rgba(255,255,255,0.8);
+          color: transparent;
+        }
+        .stroke-text-small {
+          -webkit-text-stroke: 1px rgba(234, 88, 12, 0.5);
           color: transparent;
         }
         input[type="file"]::file-selector-button {
