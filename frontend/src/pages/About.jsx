@@ -166,7 +166,6 @@ export default function About() {
               { icon: <Megaphone size={32} />, title: "Educate", text: "Spreading awareness builds responsible pet care and compassionate neighborhoods." },
               { icon: <Globe size={32} />, title: "Coexist", text: "Humans and animals can live safely together through profound understanding and respect." },
             ].map((item, i) => (
-              // Using our new High-Performance Component here
               <ValueCard key={i} item={item} /> 
             ))}
           </div>
@@ -190,21 +189,45 @@ export default function About() {
         <div className="flex gap-6 overflow-x-auto pb-10 snap-x snap-mandatory hide-scrollbar">
           {volunteers.map((vol, index) => (
             <div key={index} className="min-w-[280px] md:min-w-[320px] snap-center group">
-              <div className="bg-[#151515] p-8 rounded-[3rem] border border-white/5 hover:border-orange-500/50 transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center h-full">
+              {/* Dossier Card */}
+              <div className="bg-[#111] p-8 rounded-[3rem] border border-white/5 hover:border-orange-500/40 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(234,88,12,0.15)] transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center h-full">
                 
-                <div className="relative w-40 h-40 mb-8 mt-4">
-                  <div className="absolute inset-0 bg-orange-600 rounded-full blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
+                {/* Active Ground Status */}
+                <div className="absolute top-6 right-8 flex items-center gap-2" title="Active on Ground">
+                  <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest group-hover:text-green-500 transition-colors duration-500">Active</span>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                </div>
+
+                {/* Target/Radar Image Container (Increased Size) */}
+                <div className="relative w-56 h-56 mb-8 mt-6">
+                  {/* Outer spinning dashed ring on hover */}
+                  <div className="absolute inset-[-15px] border border-white/10 rounded-full border-dashed group-hover:border-orange-500/40 group-hover:animate-[spin_10s_linear_infinite] transition-colors duration-500" />
+                  
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 bg-orange-600 rounded-full blur-[30px] opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                  
+                  {/* Profile Picture */}
                   <img
                     src={vol.photo}
                     alt={vol.name}
-                    className="relative z-10 w-full h-full object-cover rounded-full border-4 border-[#222] group-hover:border-orange-500 transition-colors duration-500 grayscale group-hover:grayscale-0"
+                    className="relative z-10 w-full h-full object-cover rounded-full border-[3px] border-[#222] group-hover:border-orange-500 transition-colors duration-500 grayscale group-hover:grayscale-0"
                     onError={(e) => { e.target.src = "https://via.placeholder.com/150/111111/ea580c?text=TB" }}
                   />
                 </div>
                 
-                <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">{vol.name}</h3>
-                <p className="text-orange-500 font-bold uppercase tracking-widest text-xs mb-4">{vol.role}</p>
-                <div className="w-10 h-1 bg-white/10 group-hover:w-full transition-all duration-500 mt-auto" />
+                {/* Operative Data */}
+                <h3 className="text-2xl font-black uppercase tracking-tighter mb-1 text-white group-hover:text-orange-500 transition-colors">{vol.name}</h3>
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mb-8">{vol.role}</p>
+                
+                {/* Bottom Tech Bar (Centered) */}
+                <div className="w-full mt-auto pt-5 border-t border-white/5 flex justify-center items-center">
+                  {/* Abstract "Barcode" that lights up */}
+                  
+                </div>
+
               </div>
             </div>
           ))}
