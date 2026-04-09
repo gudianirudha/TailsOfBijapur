@@ -217,9 +217,9 @@ export default function Awareness() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               "https://res.cloudinary.com/ds53m10cl/image/upload/v1775381336/WhatsApp_Image_2026-04-05_at_2.58.40_PM_bxjn84.jpg",
-              "YOUR_SECOND_IMAGE_URL_HERE",
-              "YOUR_THIRD_IMAGE_URL_HERE",
-              "YOUR_FOURTH_IMAGE_URL_HERE"
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775738933/image-1_g8u5rw.jpg",
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775738934/image-2_iluwbk.jpg",
+              "https://res.cloudinary.com/ds53m10cl/image/upload/v1775738776/imresizer-WhatsApp_Image_2026-04-05_at_2.49.20_PM_pmfnaj.jpg"
             ].map((url, i) => (
               <div key={i} className="group relative aspect-[4/3] rounded-3xl overflow-hidden bg-[#151515] border border-white/5">
                  <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-transparent mix-blend-multiply opacity-50 group-hover:opacity-0 transition-opacity duration-500 z-10" />
