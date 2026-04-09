@@ -87,12 +87,6 @@ const Nav = () => {
             <span className="text-[10px] font-bold uppercase tracking-widest text-white">Rescue Active</span>
           </div>
 
-          <button 
-            onClick={() => nav("/contact")}
-            className="px-8 py-3 bg-orange-600 hover:bg-white hover:text-black text-white text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-[0_0_20px_rgba(234,88,12,0.3)] hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"
-          >
-            Report Animal
-          </button>
         </div>
 
         {/* MOBILE TOGGLE */}
@@ -113,12 +107,6 @@ const Nav = () => {
             {link.name}
           </NavLink>
         ))}
-        <button 
-          onClick={() => { nav("/contact"); setIsOpen(false); }}
-          className="mt-8 px-12 py-4 bg-orange-600 text-white font-black uppercase tracking-widest rounded-full"
-        >
-          Report Animal
-        </button>
       </div>
     </nav>
   );
@@ -157,17 +145,20 @@ const Footer = () => {
 
           {/* QUICK LINKS GRID */}
           <div className="md:col-span-5 grid grid-cols-2 gap-12 pt-4">
+            
+            {/* Column 1: Nav */}
             <div className="space-y-8">
               <p className="text-orange-600 font-black uppercase text-sm tracking-[0.3em] flex items-center gap-2">
                 <span className="w-2 h-2 bg-orange-600 rounded-full block"></span> Nav
               </p>
               <ul className="space-y-5 text-gray-400 font-bold uppercase text-lg tracking-tighter">
                 <li><Link to="/about" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Our Story</Link></li>
-                <li><Link to="/adopt" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Adoptable</Link></li>
-                <li><Link to="/why-adopt" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Why Adopt</Link></li>
+                <li><Link to="/adopt" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Adoptable Rescues</Link></li>
+                <li><Link to="/indies" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Indies Philosophy</Link></li>
               </ul>
             </div>
             
+            {/* Column 2: Action */}
             <div className="space-y-8">
               <p className="text-orange-600 font-black uppercase text-sm tracking-[0.3em] flex items-center gap-2">
                 <span className="w-2 h-2 bg-orange-600 rounded-full block"></span> Action
@@ -175,11 +166,12 @@ const Footer = () => {
               <ul className="space-y-5 text-gray-400 font-bold uppercase text-lg tracking-tighter">
                 <li><Link to="/donate" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Financial Aid</Link></li>
                 <li><Link to="/volunteer" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Volunteer Ground</Link></li>
-                <li><Link to="/contact" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Report Crisis</Link></li>
+                <li><Link to="/awareness" className="hover:text-white transition-colors flex items-center gap-2 group"><ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /> Public Awareness</Link></li>
               </ul>
             </div>
+            
           </div>
-        </div>
+          </div>
 
         {/* BOTTOM STRIP */}
         <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
