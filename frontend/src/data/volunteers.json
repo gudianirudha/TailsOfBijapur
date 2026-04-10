@@ -1,12 +1,12 @@
 [{
         "name": "Raksha Sir Desai",
         "role": "Core Team Member & Coordinator",
-        "photo": "/icons/user-placeholder.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775751562/raksha_tob_bcrhvi.jpg"
     },
     {
         "name": "Anirudha Gudi",
         "role": "Founder & Coordinator",
-        "photo": "/icons/user-placeholder.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775758528/anirudha_tob_rgwxbr.jpg"
     },
     {
         "name": "Abhilash Kulkarni",
@@ -14,133 +14,128 @@
         "photo": "/icons/user-placeholder.jpg"
     },
     {
-        "name": "Megha N",
+        "name": "Megha Nimbargimath",
+        "role": "Core Team Member & Coordinator",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775804993/megha_tob_tys9fx.jpg"
+    },
+    {
+        "name": "Shivkumar M Tuppad",
         "role": "Core Team Member & Coordinator",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Swati Vikram",
-        "role": "Veterinary Support",
-        "photo": "/icons/user-placeholder.jpg"
-    },
-    {
-        "name": "Shivkumar M Tuppad",
-        "role": "Transport & Logistics",
+        "role": "MVP Foster & Coordinator",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Dr Ashwini Hiremath",
-        "role": "Community Outreach",
+        "role": "Senior Advisor - Community Outreach",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Shivani K",
-        "role": "Rescue Assistance",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Outreach and Account Management",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775806004/shivani_tob_ndp4ho.jpg"
     },
     {
         "name": "Ananya Kulkarni",
-        "role": "Community Outreach",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Speaker & Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775758536/ananya_tob_xxntkb.jpg"
     },
     {
         "name": "Anviya",
-        "role": "Rescue Assistance",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Speaker & Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775751561/anviya_tob_xx1xs1.jpg"
     },
     {
         "name": "Manju Gurav",
-        "role": "Animal Care & Feeding",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775805955/manju_tob_axdlb8.jpg"
     },
     {
         "name": "Kiran Talawar",
-        "role": "Veterinary Support",
+        "role": "Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Samarth Kulkarni",
-        "role": "Veterinary Support",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Awareness",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775804992/samarth_tob_zz9s7f.jpg"
     },
     {
         "name": "CA Mansi Toshniwal",
-        "role": "Transport & Logistics",
-        "photo": "/icons/user-placeholder.jpg"
-    },
-    {
-        "name": "Anchal Chopra",
-        "role": "On-Spot Emergency Response",
-        "photo": "/icons/user-placeholder.jpg"
-    },
-    {
-        "name": "Dev Oswal",
-        "role": "On-Spot Emergency Response",
-        "photo": "/icons/user-placeholder.jpg"
-    },
-    {
-        "name": "Pratima",
         "role": "Community Awareness",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
+        "name": "Anchal Chopra",
+        "role": "Community Awareness",
+        "photo": "/icons/user-placeholder.jpg"
+    },
+    {
+        "name": "Pratima",
+        "role": "Senior Advisor - Community Outreach",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775804993/pratima_tob_rmklbt.jpg"
+    },
+    {
         "name": "Sagar Galagali",
-        "role": "On-Spot Emergency Response",
+        "role": "Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Sandeep Biradar",
-        "role": "On-Spot Emergency Response",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Awareness",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775756818/sandeep_tob_lfblfh.jpg"
     },
     {
         "name": "Sahil",
-        "role": "On-Spot Emergency Response",
+        "role": "Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Srujana Gon",
-        "role": "On-Spot Emergency Response",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Awareness and Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775751562/srujana_tob_x2bd9f.jpg"
     },
     {
         "name": "Sudha Deshpande",
-        "role": "On-Spot Emergency Response",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Awareness and Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775751562/sudha_tob_v2yxju.jpg"
     },
     {
         "name": "Veeresh Patil",
-        "role": "On-Spot Emergency Response",
+        "role": "Community Awareness and Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Veeresh Badiger",
-        "role": "On-Spot Emergency Response",
+        "role": "Community Awareness and Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Varun B",
-        "role": "On-Spot Emergency Response",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Awareness and Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775754829/varun_tob_fmazf3.jpg"
     },
     {
         "name": "Shweta",
-        "role": "On-Spot Emergency Response",
+        "role": "Community Awareness and Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Namratha J",
-        "role": "On-Spot Emergency Response",
+        "role": "Community Awareness and Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Vinayak Kulkarni",
-        "role": "On-Spot Emergency Response",
+        "role": "Community Awareness and Rescue Assistance",
         "photo": "/icons/user-placeholder.jpg"
     },
     {
         "name": "Ashwini B",
-        "role": "On-Spot Emergency Response",
-        "photo": "/icons/user-placeholder.jpg"
+        "role": "Community Awareness and Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775804992/ashwini_tob_x0ql4r.jpg"
     }
 ]

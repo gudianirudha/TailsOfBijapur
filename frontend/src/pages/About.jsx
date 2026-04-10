@@ -166,13 +166,13 @@ export default function About() {
               { icon: <Megaphone size={32} />, title: "Educate", text: "Spreading awareness builds responsible pet care and compassionate neighborhoods." },
               { icon: <Globe size={32} />, title: "Coexist", text: "Humans and animals can live safely together through profound understanding and respect." },
             ].map((item, i) => (
-              // Using our new High-Performance Component here
               <ValueCard key={i} item={item} /> 
             ))}
           </div>
         </div>
       </section>
 
+      {/* ================= MEET THE TEAM ================= */}
       {/* ================= MEET THE TEAM ================= */}
       <section id="team-section" className="py-32 px-4 md:px-12 max-w-[1400px] mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
@@ -190,21 +190,48 @@ export default function About() {
         <div className="flex gap-6 overflow-x-auto pb-10 snap-x snap-mandatory hide-scrollbar">
           {volunteers.map((vol, index) => (
             <div key={index} className="min-w-[280px] md:min-w-[320px] snap-center group">
-              <div className="bg-[#151515] p-8 rounded-[3rem] border border-white/5 hover:border-orange-500/50 transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center h-full">
+              {/* Dossier Card */}
+              <div className="bg-[#111] p-6 rounded-[2rem] border border-white/5 hover:border-orange-500/40 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center h-full">
                 
-                <div className="relative w-40 h-40 mb-8 mt-4">
-                  <div className="absolute inset-0 bg-orange-600 rounded-full blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
+                {/* Active Ground Status */}
+                <div className="absolute top-4 right-6 flex items-center gap-2 z-20" title="Active on Ground">
+                  <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest group-hover:text-green-500 transition-colors duration-500">Active</span>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                </div>
+
+                {/* THE BULLETPROOF IMAGE CONTAINER */}
+                <div className="relative w-full aspect-[4/5] mb-6 mt-6 bg-black rounded-xl overflow-hidden border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                  
+                  {/* 1. The Blurred Background (Fills the empty space with a cool glowing effect) */}
+                  <img
+                    src={vol.photo}
+                    alt="backdrop"
+                    className="absolute inset-0 w-full h-full object-cover blur-[20px] opacity-30 group-hover:opacity-50 transition-opacity duration-500"
+                    onError={(e) => { e.target.style.display='none' }}
+                  />
+                  
+                  {/* 2. The Actual Photo (object-contain ensures ZERO cropping) */}
                   <img
                     src={vol.photo}
                     alt={vol.name}
-                    className="relative z-10 w-full h-full object-cover rounded-full border-4 border-[#222] group-hover:border-orange-500 transition-colors duration-500 grayscale group-hover:grayscale-0"
-                    onError={(e) => { e.target.src = "https://via.placeholder.com/150/111111/ea580c?text=TB" }}
+                    className="absolute inset-0 w-full h-full object-contain p-2 z-10 grayscale group-hover:grayscale-0 transition-all duration-500"
+                    onError={(e) => { e.target.src = "https://via.placeholder.com/300x400/111111/ea580c?text=TB" }}
                   />
+
+                  {/* Tactical Screen Bracket Overlays */}
+                  <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-white/20 z-20" />
+                  <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-white/20 z-20" />
+                  <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-white/20 z-20" />
+                  <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-white/20 z-20" />
                 </div>
                 
-                <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">{vol.name}</h3>
-                <p className="text-orange-500 font-bold uppercase tracking-widest text-xs mb-4">{vol.role}</p>
-                <div className="w-10 h-1 bg-white/10 group-hover:w-full transition-all duration-500 mt-auto" />
+                {/* Operative Data */}
+                <h3 className="text-2xl font-black uppercase tracking-tighter mb-1 text-white group-hover:text-orange-500 transition-colors">{vol.name}</h3>
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mb-2">{vol.role}</p>
+
               </div>
             </div>
           ))}

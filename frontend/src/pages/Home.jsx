@@ -29,7 +29,7 @@ export default function Home() {
             <span className="text-orange-600">REHOME.</span>
           </h1>
           
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-12">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-12">
             <button 
               onClick={() => nav("/donate")}
               className="group relative px-12 py-5 bg-white text-black font-black uppercase tracking-tighter overflow-hidden rounded-full transition-all hover:scale-105"
@@ -41,14 +41,16 @@ export default function Home() {
             </button>
             
             <button 
-              onClick={() => nav("/contact")}
-              className="px-12 py-5 border-2 border-white/20 rounded-full font-black uppercase tracking-tighter hover:bg-white/10 transition-all flex items-center gap-3"
+              onClick={() => nav("/adopt")}
+              className="group px-12 py-5 border-2 border-white/20 rounded-full font-black uppercase tracking-tighter hover:bg-white/10 transition-all flex items-center gap-3 text-lg"
             >
-              <Phone size={20} className="text-orange-500" /> Report Emergency
+                Bring a Soul Home <Heart size={20} className="group-hover:scale-110 transition-transform text-orange-500" />   
             </button>
           </div>
-        </div>
-      </section>
+          </div>
+          </section>
+
+      
 
       {/* ================= THE MARQUEE (Social Proof) ================= */}
       <div className="bg-orange-600 py-4 border-y-2 border-black overflow-hidden whitespace-nowrap">
@@ -72,8 +74,8 @@ export default function Home() {
               <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-8 max-w-2xl">
                 WE FIGHT FOR THE <span className="text-white/30">ABANDONED.</span>
               </h2>
-              <p className="text-gray-400 text-xl max-w-xl leading-relaxed">
-                When everyone else looks away, we step in. Our mobile unit covers 50km around Bijapur to provide instant trauma care.
+              <p className="text-gray-400 text-xl max-w-xl leading-relaxed font-medium">
+                It is better to fight for a life the world discarded than to live accepting the silence. Compassion without action is just observation. We choose the front lines.
               </p>
             </div>
             {/* Background Texture/Image */}
@@ -114,7 +116,7 @@ export default function Home() {
           <ActionCard 
             step="01" 
             title="Crisis Call" 
-            text="Our network alerts us to injured dogs, abandoned pups, or starving families." 
+            text="Our network connects with Veterinarians to understand the situation." 
           />
           <ActionCard 
             step="02" 
@@ -131,13 +133,18 @@ export default function Home() {
 
       {/* ================= FOOTER / FINAL CALL ================= */}
       <footer className="bg-white text-black py-20 px-4 md:px-12 border-t border-gray-100">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="text-center md:text-left">
-             <p className="text-sm font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Ready to Help?</p>
-             <h4 className="text-4xl md:text-6xl font-black tracking-tighter underline decoration-orange-600 underline-offset-8 transition-all hover:text-orange-600 cursor-pointer">
-               JOIN THE PACK
-             </h4>
-          </div>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-10">
+        <div className="text-center md:text-left">
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Ready to Help?</p>
+          <h4 
+            onClick={() => nav("/volunteer")}
+            className="text-4xl md:text-6xl font-black tracking-tighter underline decoration-orange-600 underline-offset-8 transition-all hover:text-orange-600 cursor-pointer"
+          >
+            JOIN THE PACK
+          </h4>
+        </div>
+
+
           <div className="flex gap-4">
              {["Instagram", "Twitter", "Facebook"].map(link => (
                <button key={link} className="px-6 py-2 border-2 border-black font-bold uppercase text-xs rounded-full hover:bg-black hover:text-white transition-all">
