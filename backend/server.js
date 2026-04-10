@@ -1,8 +1,5 @@
 require("dotenv").config();
 
-const dns = require("node:dns");
-dns.setServers(["1.1.1.1"]);
-
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -170,7 +167,7 @@ app.post(
 );
 
 /* ==============================
-   Volunteer Submit (FIXED: Added Admin Email)
+   Volunteer Submit
 ============================== */
 
 app.post("/api/volunteer", async(req, res) => {
@@ -235,7 +232,7 @@ function verifyAdmin(req, res, next) {
 }
 
 /* ==============================
-   Admin Routes (FIXED: Added Volunteer Routes)
+   Admin Routes
 ============================== */
 
 // --- ADOPTIONS ---
@@ -355,13 +352,15 @@ app.get("/api/approved-puppies", async(req, res) => {
 });
 
 /* ==============================
-   Start Server (FIXED)
+   Start Server (Vercel Secure)
 ============================== */
 
-// Start the server directly for local testing
-app.listen(PORT, () => {
-    console.log(`🚀 Command Center Online: Port ${PORT}`);
-});
+// Only listen locally. Vercel will use the exported app automatically.
+if (process.env.NODE_ENV !== "production") {
+    app.listen(PORT, () => {
+        console.log(`🚀 Command Center Online: Port ${PORT}`);
+    });
+}
 
-// Export for Vercel/Serverless if needed
+// Export for Vercel/Serverless
 module.exports = app;
