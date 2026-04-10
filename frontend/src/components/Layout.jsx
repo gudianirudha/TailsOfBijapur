@@ -195,8 +195,8 @@ const Footer = () => {
           
           <div className="flex gap-6 text-gray-500 text-xs">
              <div className="flex items-center gap-2"><FaMapMarkerAlt /> Bijapur, Karnataka</div>
-             <div className="flex items-center gap-2"><FaPhoneAlt /> +91 81230 38270</div>
-             <div className="flex items-center gap-2"><FaEnvelope /> tailsofbijapur@gmail.com</div>
+             <div className="flex items-center gap-2"><FaPhoneAlt /> +91 8792170279</div>
+             <div className="flex items-center gap-2"><FaEnvelope /> support@tailsofbijapur.org</div>
           </div>
         </div>
 
