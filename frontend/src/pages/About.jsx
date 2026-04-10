@@ -173,6 +173,7 @@ export default function About() {
       </section>
 
       {/* ================= MEET THE TEAM ================= */}
+      {/* ================= MEET THE TEAM ================= */}
       <section id="team-section" className="py-32 px-4 md:px-12 max-w-[1400px] mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
           <div>
@@ -190,10 +191,10 @@ export default function About() {
           {volunteers.map((vol, index) => (
             <div key={index} className="min-w-[280px] md:min-w-[320px] snap-center group">
               {/* Dossier Card */}
-              <div className="bg-[#111] p-8 rounded-[3rem] border border-white/5 hover:border-orange-500/40 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(234,88,12,0.15)] transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center h-full">
+              <div className="bg-[#111] p-6 rounded-[2rem] border border-white/5 hover:border-orange-500/40 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center h-full">
                 
                 {/* Active Ground Status */}
-                <div className="absolute top-6 right-8 flex items-center gap-2" title="Active on Ground">
+                <div className="absolute top-4 right-6 flex items-center gap-2 z-20" title="Active on Ground">
                   <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest group-hover:text-green-500 transition-colors duration-500">Active</span>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -201,32 +202,35 @@ export default function About() {
                   </span>
                 </div>
 
-                {/* Target/Radar Image Container (Increased Size) */}
-                <div className="relative w-56 h-56 mb-8 mt-6">
-                  {/* Outer spinning dashed ring on hover */}
-                  <div className="absolute inset-[-15px] border border-white/10 rounded-full border-dashed group-hover:border-orange-500/40 group-hover:animate-[spin_10s_linear_infinite] transition-colors duration-500" />
+                {/* THE BULLETPROOF IMAGE CONTAINER */}
+                <div className="relative w-full aspect-[4/5] mb-6 mt-6 bg-black rounded-xl overflow-hidden border border-white/5 group-hover:border-orange-500/30 transition-colors">
                   
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 bg-orange-600 rounded-full blur-[30px] opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                  {/* 1. The Blurred Background (Fills the empty space with a cool glowing effect) */}
+                  <img
+                    src={vol.photo}
+                    alt="backdrop"
+                    className="absolute inset-0 w-full h-full object-cover blur-[20px] opacity-30 group-hover:opacity-50 transition-opacity duration-500"
+                    onError={(e) => { e.target.style.display='none' }}
+                  />
                   
-                  {/* Profile Picture */}
+                  {/* 2. The Actual Photo (object-contain ensures ZERO cropping) */}
                   <img
                     src={vol.photo}
                     alt={vol.name}
-                    className="relative z-10 w-full h-full object-cover rounded-full border-[3px] border-[#222] group-hover:border-orange-500 transition-colors duration-500 grayscale group-hover:grayscale-0"
-                    onError={(e) => { e.target.src = "https://via.placeholder.com/150/111111/ea580c?text=TB" }}
+                    className="absolute inset-0 w-full h-full object-contain p-2 z-10 grayscale group-hover:grayscale-0 transition-all duration-500"
+                    onError={(e) => { e.target.src = "https://via.placeholder.com/300x400/111111/ea580c?text=TB" }}
                   />
+
+                  {/* Tactical Screen Bracket Overlays */}
+                  <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-white/20 z-20" />
+                  <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-white/20 z-20" />
+                  <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-white/20 z-20" />
+                  <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-white/20 z-20" />
                 </div>
                 
                 {/* Operative Data */}
                 <h3 className="text-2xl font-black uppercase tracking-tighter mb-1 text-white group-hover:text-orange-500 transition-colors">{vol.name}</h3>
-                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mb-8">{vol.role}</p>
-                
-                {/* Bottom Tech Bar (Centered) */}
-                <div className="w-full mt-auto pt-5 border-t border-white/5 flex justify-center items-center">
-                  {/* Abstract "Barcode" that lights up */}
-                  
-                </div>
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mb-2">{vol.role}</p>
 
               </div>
             </div>
