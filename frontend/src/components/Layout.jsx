@@ -14,11 +14,26 @@ const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const nav = useNavigate();
 
+  // 1. Detect background scroll for the translucent header effect
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // 2. THE FIX: Lock the body scroll when the mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"; // Freezes the background
+    } else {
+      document.body.style.overflow = "unset";  // Unfreezes the background
+    }
+
+    // Cleanup function in case the component unmounts
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   const navLinks = [
     { name: "About", path: "/about" },
@@ -37,7 +52,7 @@ const Nav = () => {
     >
       <div className="max-w-[1400px] mx-auto px-6 flex justify-between items-center">
         
-{/* LOGO: ARCHITECTURAL MONOGRAM */}
+        {/* LOGO: ARCHITECTURAL MONOGRAM */}
         <Link to="/" className="group flex items-center gap-4 z-[101]">
           {/* Geometric Box */}
           <div className="relative w-12 h-12 flex items-center justify-center border border-white/20 bg-[#050505] overflow-hidden group-hover:border-orange-500 transition-colors duration-500">
