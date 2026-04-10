@@ -19,8 +19,7 @@ export default function Volunteer() {
     setStatus("submitting");
     
     try {
-      // Points to your local backend
-      const res = await fetch("http://localhost:4000/api/volunteer", {
+      const res = await fetch("/api/volunteer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

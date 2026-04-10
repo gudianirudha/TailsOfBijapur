@@ -20,7 +20,8 @@ export default function Admin() {
   // ================= FETCH LOGIC =================
   async function fetchAdoptions(token) {
     try {
-      const res = await fetch("http://localhost:4000/api/admin/pending", {
+
+      const res = await fetch("/api/admin/pending", {
         headers: { Authorization: "Bearer " + token },
       });
       if (res.status === 401) {
@@ -36,8 +37,8 @@ export default function Admin() {
 
   async function fetchVolunteers(token) {
     try {
-      // Pointing to the newly created secure admin route in server.js!
-      const res = await fetch("http://localhost:4000/api/admin/volunteers", {
+      
+      const res = await fetch("/api/admin/volunteers", {
         headers: { Authorization: "Bearer " + token },
       });
       if (res.status === 401) {
@@ -57,7 +58,7 @@ export default function Admin() {
   async function updateAdoption(id, status) {
     const token = localStorage.getItem("adminToken");
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/adoptions/${id}`, {
+      const res = await fetch(`/api/admin/adoptions/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -79,8 +80,7 @@ export default function Admin() {
   async function updateVolunteer(id, status) {
     const token = localStorage.getItem("adminToken");
     try {
-      // Pointing to the newly created secure admin route in server.js!
-      const res = await fetch(`http://localhost:4000/api/admin/volunteers/${id}`, {
+      const res = await fetch(`/api/admin/volunteers/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

@@ -136,7 +136,8 @@ export default function Adopt() {
       Object.keys(form).forEach(key => payload.append(key, key === 'phone' ? normalizePhone(form[key]) : form[key]));
       payload.append('image', imageFile);
 
-      const res = await fetch('http://localhost:4000/api/adopt-submissions', {
+      // PROD UPDATE: Removed http://localhost:4000
+      const res = await fetch('/api/adopt-submissions', {
         method: 'POST',
         body: payload,
       });
@@ -161,7 +162,8 @@ export default function Adopt() {
 
   // Failsafe API Fetching
   useEffect(() => {
-    fetch("http://localhost:4000/api/approved-puppies")
+    // PROD UPDATE: Removed http://localhost:4000
+    fetch("/api/approved-puppies")
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch");
         return res.json();
