@@ -11,7 +11,7 @@
     {
         "name": "Abhilash Kulkarni",
         "role": "Core Team Member & Coordinator",
-        "photo": "/icons/user-placeholder.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880766/abhi_tob_dzvvjo.jpg"
     },
     {
         "name": "Megha Nimbargimath",
@@ -21,7 +21,7 @@
     {
         "name": "Shivkumar M Tuppad",
         "role": "Core Team Member & Coordinator",
-        "photo": "/icons/user-placeholder.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880767/shivu_tob_hodo45.jpg"
     },
     {
         "name": "Swati Vikram",
@@ -41,7 +41,7 @@
     {
         "name": "Ananya Kulkarni",
         "role": "Community Speaker & Rescue Assistance",
-        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775758536/ananya_tob_xxntkb.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880428/ananya_tob_phmv5v.jpg"
     },
     {
         "name": "Anviya",
@@ -71,12 +71,12 @@
     {
         "name": "Anchal Chopra",
         "role": "Community Awareness and Social Media Management",
-        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775831601/anchal_tob_scbhji.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880428/anchal_tob_st8cp6.jpg"
     },
     {
         "name": "Pratima",
         "role": "Senior Advisor - Community Outreach",
-        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775804993/pratima_tob_rmklbt.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880428/pratima_tob_in59sx.jpg"
     },
     {
         "name": "Sagar Galagali",
@@ -104,9 +104,19 @@
         "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775751562/sudha_tob_v2yxju.jpg"
     },
     {
+        "name": "Vinayak Kulkarni",
+        "role": "Community Awareness and Rescue Assistance",
+        "photo": "/icons/user-placeholder.jpg"
+    },
+    {
         "name": "Veeresh Patil",
         "role": "Community Awareness and Rescue Assistance",
         "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775839475/veeresh_patil_tob_xa0ghf.jpg"
+    },
+    {
+        "name": "Ashwini B",
+        "role": "Community Awareness and Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775804992/ashwini_tob_x0ql4r.jpg"
     },
     {
         "name": "Veeresh Badiger",
@@ -126,16 +136,11 @@
     {
         "name": "Namratha J",
         "role": "Community Awareness and Rescue Assistance",
-        "photo": "/icons/user-placeholder.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880428/nambratha_tob_xin8qr.jpg"
     },
     {
-        "name": "Vinayak Kulkarni",
-        "role": "Community Awareness and Rescue Assistance",
-        "photo": "/icons/user-placeholder.jpg"
-    },
-    {
-        "name": "Ashwini B",
-        "role": "Community Awareness and Rescue Assistance",
-        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775804992/ashwini_tob_x0ql4r.jpg"
+        "name": "Mayur Patel",
+        "role": "Community Awareness and Pet India Member",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880428/mayur_tob_mgqo9x.jpg"
     }
 ]
