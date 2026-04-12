@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Camera, ShieldCheck, Syringe, Crosshair, ArrowUpRight, Activity, X } from "lucide-react";
+import { Camera, ShieldCheck, Crosshair, ArrowUpRight, Activity, X, Eye, CarFront } from "lucide-react";
 
-// ================= MOCK DATA =================
+// ==========================================
+// 1. MOCK DATA
+// ==========================================
 const successStories = [
   {
     id: "CASE-001",
@@ -57,7 +59,80 @@ const vaccinationDrives = [
 ];
 
 
-// ================= MAIN COMPONENT =================
+// ==========================================
+// 2. INTERACTIVE WIDGET: NIGHT SHIELD SIMULATOR (MODIFIED)
+// ==========================================
+const NightShieldInteractive = () => {
+  const [isLit, setIsLit] = useState(false);
+
+  return (
+    <div 
+      className="relative w-full h-[400px] rounded-[2rem] overflow-hidden cursor-pointer group border border-white/10 transition-all duration-700 bg-[#050505]"
+      onClick={() => setIsLit(!isLit)}
+      onMouseEnter={() => setIsLit(true)}
+      onMouseLeave={() => setIsLit(false)}
+    >
+      {/* Increased Headlight Beam Intensity (via-white/25 vs via-white/10) */}
+      <div 
+        className={`absolute top-1/2 -translate-y-1/2 -left-full w-[200%] h-[150px] bg-gradient-to-r from-transparent via-white/25 to-transparent blur-2xl rotate-12 transition-transform duration-1000 ease-out z-0 ${
+          isLit ? 'translate-x-[50%]' : '-translate-x-full'
+        }`} 
+      />
+
+      {/* The Photograph Container */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+        
+        <div className="relative w-56 h-56 md:w-64 md:h-64 -mt-8 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 bg-black">
+          
+          {/* THE REALISTIC NIGHT SHADOW OVERLAY */}
+          <div 
+            className={`absolute inset-0 bg-[#020617] pointer-events-none transition-opacity duration-700 ease-out z-10 ${
+              isLit ? 'opacity-0' : 'opacity-70'
+            }`} 
+          />
+
+          {/* SIGNIFICANTLY MORE ILLUMINATING: brightness, contrast, saturate amped up in lit state */}
+          <img 
+            src="https://res.cloudinary.com/ds53m10cl/image/upload/v1775969952/WhatsApp_Image_2026-04-05_at_2.19.59_PM_1_joh2fu.jpg?q=80&w=1000&auto=format&fit=crop" 
+            alt="Street dog at night" 
+            className={`w-full h-full object-cover transition-all duration-700 ease-out relative z-0 ${
+              isLit 
+                ? 'brightness-125 contrast-125 saturate-125' // THE UPDATE: More Illuminating
+                : 'brightness-[0.35] contrast-125 saturate-[0.3]'
+            }`}
+          />
+          
+          {/* ❌ ORANGE BELT REMOVED HERE ❌ */}
+        </div>
+
+        {/* Status Text */}
+        <div className="absolute bottom-6 flex flex-col items-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 mb-2">
+            {isLit ? 'High Visibility Active' : 'Stealth Mode'}
+          </p>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-500 ${
+            isLit ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-red-500/10 border-red-500/30 text-red-500'
+          }`}>
+            {isLit ? <ShieldCheck size={16} /> : <CarFront size={16} />}
+            <span className="text-xs font-black uppercase tracking-widest">
+              {isLit ? 'Safe to Bypass' : 'Danger: Unseen'}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Interaction Hint */}
+      <div className={`absolute top-6 w-full text-center text-xs font-bold uppercase tracking-widest transition-opacity duration-300 z-20 ${isLit ? 'opacity-0' : 'opacity-100 text-gray-600'}`}>
+        Hover or Click to Illuminate
+      </div>
+    </div>
+  );
+};
+
+
+// ==========================================
+// 3. MAIN COMPONENT (PAGE LAYOUT)
+// ==========================================
 export default function Impact() {
   const [selectedMedia, setSelectedMedia] = useState(null);
 
@@ -207,6 +282,67 @@ export default function Impact() {
                 </div>
               );
             })}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ================= NIGHT VISIBILITY OPERATIONS (NEW COLLAR SECTION) ================= */}
+      <section className="py-24 px-4 md:px-12 max-w-[1400px] mx-auto border-t border-white/10 relative overflow-hidden">
+        {/* Subtle glowing background effect simulating reflection */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-orange-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+        <div className="grid lg:grid-cols-12 gap-16 items-start relative z-10">
+            
+          {/* Left Data/Visual Card */}
+          <div className="lg:col-span-5 order-2 lg:order-1 flex flex-col gap-6">
+            
+            {/* The New Interactive Simulator Component */}
+            <NightShieldInteractive />
+
+            <div className="bg-[#111] border border-white/5 p-8 rounded-[2rem] relative overflow-hidden group hover:border-orange-500/30 transition-colors">
+              {/* Simulated Reflective Strip */}
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-600 via-yellow-400 to-orange-600 opacity-80" />
+              
+              <div className="flex items-center gap-6 mb-8 mt-2">
+                <div className="bg-orange-600/10 p-5 rounded-2xl text-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.2)]">
+                  <Eye size={32} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-widest text-gray-400">Total Deployed</p>
+                  <p className="text-5xl font-black text-white tracking-tighter">200<span className="text-orange-500">+</span></p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center pb-4 border-b border-white/10 text-sm font-bold uppercase tracking-widest text-gray-300">
+                  <span>Coverage Area</span>
+                  <span className="text-orange-500 text-right">Across Bijapur</span>
+                </div>
+                <div className="flex justify-between items-center pb-4 border-b border-white/10 text-sm font-bold uppercase tracking-widest text-gray-300">
+                  <span>Primary Objective</span>
+                  <span className="text-orange-500 text-right">Night Accident Evasion</span>
+                </div>
+                <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-gray-300">
+                  <span>Equipment Status</span>
+                  <span className="text-green-500 flex items-center gap-2"><ShieldCheck size={14}/> Active on field</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Intro */}
+          <div className="lg:col-span-7 order-1 lg:order-2 lg:sticky lg:top-32">
+            <span className="text-orange-500 font-bold uppercase tracking-[0.3em] text-sm mb-4 block">/ Road Safety Operations</span>
+            <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-8">
+              NIGHT SHIELD <br /> <span className="text-gray-600">DEPLOYMENT.</span>
+            </h2>
+            <p className="text-xl text-gray-400 font-medium leading-relaxed mb-6">
+              Urban traffic is a silent killer for street animals after dusk. To combat this, we have initiated an ongoing deployment of high-visibility, anti-accident reflective collar belts.
+            </p>
+            <p className="text-xl text-gray-400 font-medium leading-relaxed">
+              By equipping the street population with these specialized reflective collars, we dramatically increase driver reaction times at night—turning a potential fatal impact into a safe bypass.
+            </p>
           </div>
 
         </div>
