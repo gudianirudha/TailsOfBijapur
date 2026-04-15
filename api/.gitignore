@@ -1,21 +1,28 @@
-# Node modules
+# ========================
+# TAILS OF BIJAPUR GITIGNORE
+# ========================
+
+# 1. Dependencies (Catches ALL node_modules everywhere)
 node_modules/
-frontend/node_modules/
-backend/node_modules/
+**/node_modules/
 
-# Environment variables
+# 2. Environment Variables (Protects your database passwords)
 .env
-frontend/.env
-backend/.env
+.env.*
+**/.env
 
-# Uploaded files
+# 3. Build Outputs (Prevents Vite's compiled files from bloating GitHub)
+dist/
+frontend/dist/
+build/
+
+# 4. Uploaded files (Prevents user photos from hitting GitHub)
 uploads/
+api/uploads/
 backend/uploads/
 
-# Logs
+# 5. Logs & OS Files
 *.log
 npm-debug.log*
-
-# OS files
 .DS_Store
 Thumbs.db

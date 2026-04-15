@@ -1,7 +1,10 @@
-
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
+// 1. ADD VERCEL ANALYTICS IMPORT
+import { inject } from "@vercel/analytics"
+
 import './index.css'
 import Home from './pages/Home'
 import About from './pages/About'
@@ -18,6 +21,9 @@ import AdminLogin from './pages/AdminLogin'
 import Awareness from './pages/Awareness';
 import Donate from './pages/Donate';
 import Impact from './pages/Impact'
+
+// 2. FIRE THE TRACKING BEACON
+inject();
 
 function App() {
   return (
