@@ -26,7 +26,12 @@
     {
         "name": "Swati Vikram",
         "role": "MVP Foster & Coordinator",
-        "photo": "/icons/user-placeholder.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1776787271/swati_tob_oo7dct.jpg"
+    },
+    {
+        "name": "Ananya Kulkarni",
+        "role": "Community Speaker & Rescue Assistance",
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880428/ananya_tob_phmv5v.jpg"
     },
     {
         "name": "Dr Ashwini Hiremath",
@@ -37,11 +42,6 @@
         "name": "Shivani K",
         "role": "Community Outreach and Account Management",
         "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775806004/shivani_tob_ndp4ho.jpg"
-    },
-    {
-        "name": "Ananya Kulkarni",
-        "role": "Community Speaker & Rescue Assistance",
-        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1775880428/ananya_tob_phmv5v.jpg"
     },
     {
         "name": "Anviya",
@@ -91,7 +91,7 @@
     {
         "name": "Sahil",
         "role": "Community Awareness and Rescue Assistance",
-        "photo": "/icons/user-placeholder.jpg"
+        "photo": "https://res.cloudinary.com/ds53m10cl/image/upload/v1776787271/sahil_tob_yi32up.jpg"
     },
     {
         "name": "Dr. Srujana Gonal",
