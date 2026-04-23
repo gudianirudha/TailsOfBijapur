@@ -147,10 +147,20 @@ const Footer = () => {
               &quot;We don&apos;t just feed dogs. We give them back the dignity the world took away.&quot;
             </p>
             <div className="flex gap-4">
-               {/* 3. Switched mapped array to use React Icons */}
-               {[FaInstagram, FaTwitter, FaFacebook].map((Icon, i) => (
-                 <a key={i} href="https://www.instagram.com/tailsofbijapur" target="_blank" rel="noreferrer" className="p-5 border-2 border-white/20 rounded-full text-white hover:bg-white hover:text-black hover:border-white transition-all hover:scale-110">
-                   <Icon size={24} />
+               {/* Upgraded to an array of objects to handle unique URLs */}
+               {[
+                 { Icon: FaInstagram, url: "https://www.instagram.com/tailsofbijapur" },
+                 { Icon: FaTwitter, url: "#" }, // Update this later if you get a Twitter/X account
+                 { Icon: FaFacebook, url: "https://www.facebook.com/share/1EAbfkoFvu/?mibextid=wwXIfr" }
+               ].map((social, i) => (
+                 <a 
+                   key={i} 
+                   href={social.url} 
+                   target="_blank" 
+                   rel="noreferrer" 
+                   className="p-5 border-2 border-white/20 rounded-full text-white hover:bg-white hover:text-black hover:border-white transition-all hover:scale-110"
+                 >
+                   <social.Icon size={24} />
                  </a>
                ))}
             </div>
