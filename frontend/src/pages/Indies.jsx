@@ -298,7 +298,7 @@ export default function Philosophy() {
             onClick={() => nav("/adopt")} 
             className="px-12 py-6 bg-black text-white rounded-full font-black uppercase tracking-widest text-lg hover:scale-105 hover:bg-white hover:text-black transition-all flex items-center justify-center gap-4 group shadow-2xl relative z-10"
           >
-            View Adoptable Dogs <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
+            View Adoptable Indie Dogs <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
           </button>
         </div>
       </section>
