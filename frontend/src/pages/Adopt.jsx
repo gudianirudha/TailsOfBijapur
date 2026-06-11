@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
-import { Camera, CheckCircle2, AlertCircle, X, Phone, MessageCircle, MapPin, Info, PawPrint, ArrowRight } from "lucide-react";
+import { Camera, CheckCircle2, AlertCircle, X, MapPin, Info, PawPrint, ArrowRight } from "lucide-react";
 
 // ================= MASONRY GRID COMPONENT =================
 function MasonryPuppyGrid({ puppies, onSelect }) {
@@ -428,7 +428,8 @@ export default function Adopt() {
                   { label: "Gender", val: selectedPuppy.gender },
                   { label: "Vaccinated", val: selectedPuppy.vaccinated },
                   { label: "Location", val: selectedPuppy.location },
-                  { label: "Reporter", val: selectedPuppy.reportername }
+                  { label: "Reporter", val: selectedPuppy.reportername },
+                  { label: "Phone", val: selectedPuppy.phone }
                 ].map((item, i) => (
                   <div key={i} className="flex justify-between border-b border-white/5 pb-3">
                     <span className="text-gray-500 font-bold uppercase text-xs tracking-widest">{item.label}</span>
@@ -443,15 +444,6 @@ export default function Adopt() {
                   <p className="text-gray-300 text-sm leading-relaxed font-medium">{selectedPuppy.description}</p>
                 </div>
               )}
-
-              <div className="flex flex-col sm:flex-row gap-4 mt-auto pt-8 border-t border-white/5">
-                <a href={`tel:${selectedPuppy.phone}`} className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-gray-200 text-black py-5 rounded-xl font-black uppercase tracking-widest text-xs transition-colors">
-                  <Phone size={18} /> Initiate Call
-                </a>
-                <a href={`https://wa.me/${selectedPuppy.phone}?text=Hi,%20I'm%20interested%20in%20adopting%20${selectedPuppy.name || "this puppy"}%20listed%20on%20Tails%20of%20Bijapur.`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white py-5 rounded-xl font-black uppercase tracking-widest text-xs transition-colors">
-                  <MessageCircle size={18} /> WhatsApp Comm
-                </a>
-              </div>
             </div>
           </div>
         </div>

@@ -300,6 +300,7 @@ export default function Philosophy() {
           >
             View Adoptable Indie Dogs <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
           </button>
+          
         </div>
       </section>
 
