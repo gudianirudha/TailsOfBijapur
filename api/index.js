@@ -339,7 +339,7 @@ app.get("/api/approved-puppies", async(req, res) => {
     try {
         const data = await Adoption.find({ status: "approved" })
             .select(
-                "name age gender vaccinated description imageUrl reportername location"
+                "name age gender vaccinated description imageUrl reportername location phone"
             )
             .sort({ createdAt: -1 })
             .lean();
