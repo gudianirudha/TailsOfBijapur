@@ -352,6 +352,25 @@ app.get("/api/approved-puppies", async(req, res) => {
 });
 
 /* ==============================
+   Public Adopted Puppies (Hall of Fame)
+============================== */
+app.get("/api/adopted-puppies", async(req, res) => {
+    try {
+        // Checking for "adopted" and the typo "apdopted" based on your DB document
+        const data = await Adoption.find({ status: { $in: ["adopted"] } })
+            .select("name age location imageUrl status")
+            .sort({ updatedAt: -1 }) // Sort by most recently updated/adopted
+            .lean();
+
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch adopted puppies" });
+    }
+});
+
+
+/* ==============================
    Start Server (Vercel Secure)
 ============================== */
 
