@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Dna, ThermometerSun, BrainCircuit, Heart, ArrowRight, 
-  Home, ShieldAlert, HeartHandshake, CalendarHeart, ChevronDown 
+  Home, ShieldAlert, HeartHandshake, CalendarHeart, ChevronDown, Award 
 } from "lucide-react";
 import { useTextLayout } from "../hooks/useTextLayout"; 
 
@@ -55,6 +55,30 @@ function SmartManifesto() {
 // ================= MAIN PAGE COMPONENT =================
 export default function Philosophy() {
   const nav = useNavigate();
+  
+  // State for Hall of Fame
+  const [adoptedPuppies, setAdoptedPuppies] = useState([
+    {
+      _id: "chintu_seed",
+      name: "Chintu",
+      age: "5 months",
+      location: "Abhivruddhi nagar",
+      imageUrl: "https://res.cloudinary.com/ds53m10cl/image/upload/v1775893538/tails_of_bijapur/pwcxczyhzw4mihz7hann.jpg",
+      status: "adopted"
+    }
+  ]);
+
+  // Fetch Adopted Puppies
+  useEffect(() => {
+    fetch("/api/adopted-puppies")
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAdoptedPuppies(data);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   return (
     <div className="bg-[#0A0A0A] text-[#F5F5F5] selection:bg-orange-500 selection:text-white min-h-screen overflow-x-hidden font-sans pb-24">
@@ -188,25 +212,16 @@ export default function Philosophy() {
             },
           ].map((stat, i) => (
             <div key={i} className="bg-[#111] border border-white/5 rounded-[3rem] p-12 text-center flex flex-col items-center justify-center h-full hover:border-orange-600/40 transition-all duration-500 group relative overflow-hidden">
-              
-              {/* Background Glow */}
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-600/10 blur-[80px] rounded-full group-hover:bg-orange-600/20 transition-colors" />
-              
-              {/* Stat Value */}
               <p className="text-7xl font-black text-white mb-2 group-hover:text-orange-500 transition-colors relative z-10 tracking-tighter">
                 {stat.value}
               </p>
-
-              {/* Primal Title */}
               <p className="text-orange-500 font-black text-xs tracking-[0.4em] mb-6 relative z-10 uppercase">
                 {stat.title}
               </p>
-              
-              {/* Minimalist Label */}
               <p className="text-gray-500 font-bold text-lg leading-tight relative z-10 max-w-[200px] group-hover:text-gray-300 transition-colors">
                 {stat.label}
               </p>
-
             </div>
           ))}
         </div>
@@ -280,8 +295,53 @@ export default function Philosophy() {
         </div>
       </section>
 
+      {/* ================= HALL OF FAME ================= */}
+      {adoptedPuppies.length > 0 && (
+        <section className="py-24 px-4 md:px-12 max-w-[1400px] mx-auto border-t border-white/5">
+          <div className="text-center mb-16">
+            <span className="text-orange-500 font-bold uppercase tracking-[0.3em] text-sm mb-4 block">/ Hall of Fame</span>
+            <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter">
+              FOREVER <span className="text-white/20">HOMES.</span>
+            </h2>
+            <p className="text-gray-400 mt-6 max-w-2xl mx-auto font-medium text-lg">
+              Celebrating the resilient souls who found their humans.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {adoptedPuppies.map((puppy) => (
+              <div key={puppy._id} className="group relative rounded-[2.5rem] overflow-hidden bg-[#111] border border-white/5 hover:border-orange-500/50 transition-all duration-500 h-[400px]">
+                {puppy.imageUrl && (
+                  <img 
+                    src={puppy.imageUrl} 
+                    alt={puppy.name} 
+                    className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:scale-105 group-hover:opacity-100 transition-all duration-700" 
+                  />
+                )}
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <div className="absolute top-6 right-6 bg-white text-black px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-xl z-20">
+                  <Heart className="fill-orange-600 text-orange-600" size={14} /> Adopted
+                </div>
+
+                <div className="absolute bottom-0 left-0 w-full p-8 z-20">
+                  <h3 className="text-4xl font-black uppercase tracking-tighter text-white mb-2 leading-none drop-shadow-lg">
+                    {puppy.name || "Unknown"}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-4 text-gray-300 font-bold text-xs uppercase tracking-widest">
+                    <span className="text-orange-400 flex items-center gap-1.5"><Award size={14}/> {puppy.age}</span>
+                    <span className="bg-white/10 px-3 py-1 rounded-full border border-white/10">{puppy.location}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ================= 6. MASSIVE CTA ================= */}
-      <section className="py-24 px-4 md:px-12 max-w-[1400px] mx-auto">
+      <section className="py-24 px-4 md:px-12 max-w-[1400px] mx-auto border-t border-white/5">
         <div className="bg-orange-600 rounded-[3rem] p-12 md:p-20 relative overflow-hidden flex flex-col items-center text-center">
           <Heart className="absolute -top-10 -left-10 w-64 h-64 text-black/10 pointer-events-none -rotate-12" />
           <Heart className="absolute -bottom-10 -right-10 w-64 h-64 text-black/10 pointer-events-none rotate-12" />
