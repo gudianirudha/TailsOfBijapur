@@ -176,7 +176,9 @@ export default function Adopt() {
         }
       })
       .catch(err => {
-        console.error("Failed to fetch puppies", err);
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to fetch puppies");
+        }
         setApprovedPuppies([]);
       });
   }, []);

@@ -47,11 +47,9 @@ if (missingVars.length > 0) {
     throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
 }
 
-console.log("✅ Environment variables loaded:", {
-    JWT_SECRET: process.env.JWT_SECRET ? "***" : "MISSING",
-    ADMIN_EMAIL: process.env.ADMIN_EMAIL,
-    ADMIN_PASSWORD_HASH: process.env.ADMIN_PASSWORD_HASH ? "***" : "MISSING",
-});
+if (process.env.NODE_ENV !== "production") {
+    console.log("✅ Environment variables loaded");
+}
 
 /* ==============================
    MongoDB
@@ -59,8 +57,15 @@ console.log("✅ Environment variables loaded:", {
 
 mongoose
     .connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB Connected"))
-    .catch((err) => console.error("MongoDB Error:", err));
+    .then(() => {
+        if (process.env.NODE_ENV !== "production") {
+            console.log("✅ MongoDB Connected");
+        }
+    })
+    .catch((err) => {
+        console.error("MongoDB Connection Error:", err.message);
+        process.exit(1);
+    });
 
 /* ==============================
    Schemas
@@ -211,11 +216,17 @@ app.post(
                     subject: `🐾 New Adoption - ${submission.name}`,
                     html: `<p>New adoption submission from <strong>${submission.name}</strong></p>`,
                 })
-                .catch((err) => console.error("Email Error:", err.message));
+                .catch((err) => {
+                    if (process.env.NODE_ENV !== "production") {
+                        console.error("Email Error:", err.message);
+                    }
+                });
 
             res.json({ ok: true, id: submission._id });
         } catch (err) {
-            console.error(err);
+            if (process.env.NODE_ENV !== "production") {
+                console.error("Adoption submission error:", err.message);
+            }
             res.status(500).json({ error: "Submission failed" });
         }
     }
@@ -257,11 +268,17 @@ app.post("/api/volunteer", async(req, res) => {
                 subject: `🚨 New Volunteer Recruit - ${submission.name}`,
                 html: `<p>A new volunteer (<strong>${submission.name}</strong> - ${submission.role}) has applied.</p>`,
             })
-            .catch((err) => console.error("Email Error:", err.message));
+            .catch((err) => {
+                if (process.env.NODE_ENV !== "production") {
+                    console.error("Email Error:", err.message);
+                }
+            });
 
         res.json({ ok: true, id: submission._id });
     } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Volunteer submission error:", err.message);
+        }
         res.status(500).json({ error: "Submission failed" });
     }
 });
@@ -279,7 +296,7 @@ app.post("/api/admin/login", loginLimiter, async (req, res) => {
 
     try {
         if (!process.env.ADMIN_PASSWORD_HASH) {
-            console.error("❌ ADMIN_PASSWORD_HASH not set in environment variables");
+            console.error("Server Configuration: ADMIN_PASSWORD_HASH not set");
             return res.status(500).json({ error: "Server configuration error" });
         }
 
@@ -290,15 +307,12 @@ app.post("/api/admin/login", loginLimiter, async (req, res) => {
             const token = jwt.sign({ role: "admin", email },
                 process.env.JWT_SECRET, { expiresIn: "1h" }
             );
-
-            console.log(`✅ Admin login successful for ${email}`);
             return res.json({ token });
         }
 
-        console.warn(`⚠️ Failed login attempt for ${email}`);
         res.status(401).json({ error: "Invalid credentials" });
     } catch (err) {
-        console.error("❌ Login error:", err.message);
+        console.error("Login error:", err.message);
         res.status(500).json({ error: "Login failed" });
     }
 });
@@ -335,7 +349,9 @@ app.get("/api/admin/pending", verifyAdmin, async(req, res) => {
 
         res.json(data);
     } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Fetch pending adoptions error:", err.message);
+        }
         res.status(500).json({ error: "Failed to fetch adoptions" });
     }
 });
@@ -364,12 +380,18 @@ app.patch("/api/admin/adoptions/:id", verifyAdmin, async(req, res) => {
                     subject: "🐾 Adoption Approved!",
                     text: `Hello ${updated.name}, your adoption request is approved!`,
                 })
-                .catch((err) => console.error(err.message));
+                .catch((err) => {
+                    if (process.env.NODE_ENV !== "production") {
+                        console.error("Email notification error:", err.message);
+                    }
+                });
         }
 
         res.json(updated);
     } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Update adoption error:", err.message);
+        }
         res.status(500).json({ error: "Update failed" });
     }
 });
@@ -387,7 +409,9 @@ app.get("/api/admin/volunteers", verifyAdmin, async(req, res) => {
 
         res.json(data);
     } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Fetch volunteers error:", err.message);
+        }
         res.status(500).json({ error: "Failed to fetch volunteers" });
     }
 });
@@ -416,12 +440,18 @@ app.patch("/api/admin/volunteers/:id", verifyAdmin, async(req, res) => {
                     subject: "🐾 Welcome to the Vanguard!",
                     text: `Hello ${updated.name}, your volunteer application has been approved! We will be in touch shortly.`,
                 })
-                .catch((err) => console.error(err.message));
+                .catch((err) => {
+                    if (process.env.NODE_ENV !== "production") {
+                        console.error("Email notification error:", err.message);
+                    }
+                });
         }
 
         res.json(updated);
     } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Update volunteer error:", err.message);
+        }
         res.status(500).json({ error: "Update failed" });
     }
 });
@@ -456,7 +486,9 @@ app.get("/api/approved-puppies", async(req, res) => {
             }
         });
     } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Fetch approved puppies error:", err.message);
+        }
         res.status(500).json({ error: "Failed to fetch" });
     }
 });
@@ -466,15 +498,16 @@ app.get("/api/approved-puppies", async(req, res) => {
 ============================== */
 app.get("/api/adopted-puppies", async(req, res) => {
     try {
-        // Checking for "adopted" and the typo "apdopted" based on your DB document
-        const data = await Adoption.find({ status: { $in: ["adopted"] } })
+        const data = await Adoption.find({ status: "adopted" })
             .select("name age location imageUrl status")
-            .sort({ updatedAt: -1 }) // Sort by most recently updated/adopted
+            .sort({ updatedAt: -1 })
             .lean();
 
         res.json(data);
     } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Fetch adopted puppies error:", err.message);
+        }
         res.status(500).json({ error: "Failed to fetch adopted puppies" });
     }
 });
@@ -487,7 +520,7 @@ app.get("/api/adopted-puppies", async(req, res) => {
 // Only listen locally. Vercel will use the exported app automatically.
 if (process.env.NODE_ENV !== "production") {
     app.listen(PORT, () => {
-        console.log(`🚀 Command Center Online: Port ${PORT}`);
+        console.log(`✅ Server running on port ${PORT}`);
     });
 }
 

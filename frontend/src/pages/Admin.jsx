@@ -31,7 +31,9 @@ export default function Admin() {
       const data = await res.json();
       setAdoptions(data);
     } catch (err) {
-      console.error("Failed to fetch adoptions:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to fetch adoptions");
+      }
     }
   }
 
@@ -48,7 +50,9 @@ export default function Admin() {
       const data = await res.json();
       setVolunteers(data);
     } catch (err) {
-      console.error("Failed to fetch volunteers:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to fetch volunteers");
+      }
     }
   }
 
@@ -72,7 +76,9 @@ export default function Admin() {
       }
       setAdoptions((prev) => prev.filter((item) => item._id !== id));
     } catch (err) {
-      console.error(err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Update adoption error");
+      }
     }
   }
 
@@ -95,7 +101,9 @@ export default function Admin() {
       }
       setVolunteers((prev) => prev.filter((item) => item._id !== id));
     } catch (err) {
-      console.error(err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Update volunteer error");
+      }
     }
   }
 
