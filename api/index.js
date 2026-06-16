@@ -40,9 +40,18 @@ const loginLimiter = rateLimit({
    Env Safety Check
 ============================== */
 
-if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET missing in environment variables");
+const requiredEnvVars = ['JWT_SECRET', 'ADMIN_PASSWORD_HASH', 'ADMIN_EMAIL'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+
+if (missingVars.length > 0) {
+    throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
 }
+
+console.log("✅ Environment variables loaded:", {
+    JWT_SECRET: process.env.JWT_SECRET ? "***" : "MISSING",
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+    ADMIN_PASSWORD_HASH: process.env.ADMIN_PASSWORD_HASH ? "***" : "MISSING",
+});
 
 /* ==============================
    MongoDB
@@ -269,20 +278,27 @@ app.post("/api/admin/login", loginLimiter, async (req, res) => {
     }
 
     try {
+        if (!process.env.ADMIN_PASSWORD_HASH) {
+            console.error("❌ ADMIN_PASSWORD_HASH not set in environment variables");
+            return res.status(500).json({ error: "Server configuration error" });
+        }
+
         const isEmailValid = email === process.env.ADMIN_EMAIL;
-        const isPasswordValid = await bcryptjs.compare(password, process.env.ADMIN_PASSWORD_HASH || "");
+        const isPasswordValid = await bcryptjs.compare(password, process.env.ADMIN_PASSWORD_HASH);
 
         if (isEmailValid && isPasswordValid) {
             const token = jwt.sign({ role: "admin", email },
                 process.env.JWT_SECRET, { expiresIn: "1h" }
             );
 
+            console.log(`✅ Admin login successful for ${email}`);
             return res.json({ token });
         }
 
+        console.warn(`⚠️ Failed login attempt for ${email}`);
         res.status(401).json({ error: "Invalid credentials" });
     } catch (err) {
-        console.error("Login error:", err);
+        console.error("❌ Login error:", err.message);
         res.status(500).json({ error: "Login failed" });
     }
 });
