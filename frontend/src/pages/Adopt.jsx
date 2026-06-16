@@ -162,22 +162,24 @@ export default function Adopt() {
 
   // Failsafe API Fetching
   useEffect(() => {
-    // PROD UPDATE: Removed http://localhost:4000
-    fetch("/api/approved-puppies")
+    fetch("/api/approved-puppies?page=1&limit=50")
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch");
         return res.json();
       })
-      .then(data => {
+      .then(response => {
+        const data = response.data || response;
         if (Array.isArray(data)) {
           setApprovedPuppies(data);
         } else {
-          setApprovedPuppies([]); // Prevent map crash if server returns object
+          setApprovedPuppies([]);
         }
       })
       .catch(err => {
-        console.error("Failed to fetch puppies", err);
-        setApprovedPuppies([]); // Fallback to empty state
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to fetch puppies");
+        }
+        setApprovedPuppies([]);
       });
   }, []);
 

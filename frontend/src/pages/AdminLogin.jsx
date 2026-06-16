@@ -14,10 +14,17 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
+    if (!email || !password) {
+      setError("Email and password are required");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -27,8 +34,7 @@ export default function AdminLogin() {
         throw new Error(data.error || "Authentication failed");
       }
 
-      // Secure the token and redirect to the Command Center
-      localStorage.setItem("adminToken", data.token);
+      sessionStorage.setItem("adminToken", data.token);
       navigate("/admin");
     } catch (err) {
       setError(err.message);

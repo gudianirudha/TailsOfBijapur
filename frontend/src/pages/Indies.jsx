@@ -77,7 +77,11 @@ export default function Philosophy() {
           setAdoptedPuppies(data);
         }
       })
-      .catch(console.error);
+      .catch(err => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to fetch adopted puppies");
+        }
+      });
   }, []);
 
   return (

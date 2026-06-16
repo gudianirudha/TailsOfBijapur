@@ -8,21 +8,21 @@ export default function Admin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = sessionStorage.getItem("adminToken");
     if (!token) {
       navigate("/admin-login");
       return;
     }
     fetchAdoptions(token);
     fetchVolunteers(token);
-  }, []);
+  }, [navigate]);
 
   // ================= FETCH LOGIC =================
   async function fetchAdoptions(token) {
     try {
-
       const res = await fetch("/api/admin/pending", {
         headers: { Authorization: "Bearer " + token },
+        credentials: "include",
       });
       if (res.status === 401) {
         logout();
@@ -31,32 +31,34 @@ export default function Admin() {
       const data = await res.json();
       setAdoptions(data);
     } catch (err) {
-      console.error("Failed to fetch adoptions:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to fetch adoptions");
+      }
     }
   }
 
   async function fetchVolunteers(token) {
     try {
-      
-      const res = await fetch("/api/admin/volunteers", {
+      const res = await fetch("/api/admin/volunteers?status=pending", {
         headers: { Authorization: "Bearer " + token },
+        credentials: "include",
       });
       if (res.status === 401) {
         logout();
         return;
       }
       const data = await res.json();
-      
-      const pendingVolunteers = data.filter(v => v.status !== "approved" && v.status !== "rejected");
-      setVolunteers(pendingVolunteers); 
+      setVolunteers(data);
     } catch (err) {
-      console.error("Failed to fetch volunteers:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to fetch volunteers");
+      }
     }
   }
 
   // ================= UPDATE LOGIC =================
   async function updateAdoption(id, status) {
-    const token = localStorage.getItem("adminToken");
+    const token = sessionStorage.getItem("adminToken");
     try {
       const res = await fetch(`/api/admin/adoptions/${id}`, {
         method: "PATCH",
@@ -64,6 +66,7 @@ export default function Admin() {
           "Content-Type": "application/json",
           Authorization: "Bearer " + token,
         },
+        credentials: "include",
         body: JSON.stringify({ status }),
       });
 
@@ -73,12 +76,14 @@ export default function Admin() {
       }
       setAdoptions((prev) => prev.filter((item) => item._id !== id));
     } catch (err) {
-      console.error(err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Update adoption error");
+      }
     }
   }
 
   async function updateVolunteer(id, status) {
-    const token = localStorage.getItem("adminToken");
+    const token = sessionStorage.getItem("adminToken");
     try {
       const res = await fetch(`/api/admin/volunteers/${id}`, {
         method: "PATCH",
@@ -86,21 +91,24 @@ export default function Admin() {
           "Content-Type": "application/json",
           Authorization: "Bearer " + token,
         },
+        credentials: "include",
         body: JSON.stringify({ status }),
       });
-      
+
       if (!res.ok) {
         alert("Failed to update volunteer status");
         return;
       }
       setVolunteers((prev) => prev.filter((item) => item._id !== id));
     } catch (err) {
-      console.error(err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Update volunteer error");
+      }
     }
   }
 
   function logout() {
-    localStorage.removeItem("adminToken");
+    sessionStorage.removeItem("adminToken");
     navigate("/admin-login");
   }
 
