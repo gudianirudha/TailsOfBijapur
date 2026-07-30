@@ -86,7 +86,7 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
 export default function Adopt() {
   const nav = useNavigate();
   const [form, setForm] = useState({
-    name: '', age: '', gender: 'Female', vaccinated: 'Unknown', location: '', reportername: '', phone: '', description: '',
+    name: '', email: '', age: '', gender: 'Female', vaccinated: 'Unknown', location: '', reportername: '', phone: '', description: '',
   });
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -148,7 +148,7 @@ export default function Adopt() {
       }
 
       setSuccess('Mission accomplished. Submission received and pending review.');
-      setForm({ name: '', age: '', gender: 'Female', vaccinated: 'Unknown', location: '', reportername: '', phone: '', description: '' });
+      setForm({ name: '', email: '', age: '', gender: 'Female', vaccinated: 'Unknown', location: '', reportername: '', phone: '', description: '' });
       setImageFile(null);
       setPreview(null);
       setConsent(false);
@@ -352,6 +352,11 @@ export default function Adopt() {
                   <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Contact Number <span className="text-orange-500">*</span></label>
                   <input name="phone" value={form.phone} onChange={handleChange} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="+91" required />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Email Address <span className="text-orange-500">*</span></label>
+                <input type="email" name="email" value={form.email} onChange={handleChange} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="your.email@example.com" required />
               </div>
 
               <div>
