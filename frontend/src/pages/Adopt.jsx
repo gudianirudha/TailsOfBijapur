@@ -2,6 +2,16 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Camera, CheckCircle2, AlertCircle, X, MapPin, Info, PawPrint, ArrowRight } from "lucide-react";
 
+// ================= UTILITY FUNCTION =================
+function formatAgeInDays(days) {
+  if (days < 1) return "< 1 day";
+  if (days < 7) return `${Math.round(days)} day${days !== 1 ? "s" : ""}`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks} week${weeks !== 1 ? "s" : ""}`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months !== 1 ? "s" : ""}`;
+}
+
 // ================= MASONRY GRID COMPONENT =================
 function MasonryPuppyGrid({ puppies, onSelect }) {
   const containerRef = useRef(null);
@@ -61,7 +71,7 @@ function MasonryPuppyGrid({ puppies, onSelect }) {
                     </p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-white font-bold text-xs uppercase tracking-widest shrink-0">
-                    {puppy.age || "N/A"}
+                    {formatAgeInDays(puppy.age) || "N/A"}
                   </div>
                 </div>
 
@@ -317,8 +327,8 @@ export default function Adopt() {
                   <input name="name" value={form.name} onChange={handleChange} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="e.g. Max" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Age</label>
-                  <input name="age" value={form.age} onChange={handleChange} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="e.g. 2 Months" />
+                  <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Age (Days)</label>
+                  <input type="number" name="age" value={form.age} onChange={handleChange} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="e.g. 60" min="0" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Gender</label>
@@ -431,7 +441,7 @@ export default function Adopt() {
 
               <div className="space-y-4 mb-8">
                 {[
-                  { label: "Age", val: selectedPuppy.age },
+                  { label: "Age", val: formatAgeInDays(selectedPuppy.age) },
                   { label: "Gender", val: selectedPuppy.gender },
                   { label: "Vaccinated", val: selectedPuppy.vaccinated },
                   { label: "Location", val: selectedPuppy.location },

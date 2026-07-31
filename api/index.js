@@ -74,7 +74,7 @@ mongoose
 const adoptionSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, lowercase: true },
-    age: { type: String, required: true, trim: true },
+    age: { type: Number, required: true },
     gender: { type: String, required: true, trim: true },
     vaccinated: { type: String, required: true, trim: true },
     reportername: { type: String, required: true, trim: true },
@@ -158,6 +158,11 @@ function sanitizeInput(input) {
     return input.trim().substring(0, 1000);
 }
 
+function calculateCurrentAge(ageAtApprovalDays, approvalDate) {
+    const daysSinceApproval = Math.floor((Date.now() - new Date(approvalDate).getTime()) / (24 * 60 * 60 * 1000));
+    return Math.max(0, ageAtApprovalDays + daysSinceApproval);
+}
+
 /* ==============================
    Email Transport
 ============================== */
@@ -198,7 +203,7 @@ app.post(
             const submission = await Adoption.create({
                 name: sanitizeInput(name),
                 email: sanitizeInput(email).toLowerCase(),
-                age: sanitizeInput(age),
+                age: Math.max(0, parseInt(age) || 0),
                 gender: sanitizeInput(gender),
                 vaccinated: sanitizeInput(vaccinated),
                 reportername: sanitizeInput(reportername),
@@ -468,7 +473,7 @@ app.get("/api/approved-puppies", async(req, res) => {
 
         const [data, total] = await Promise.all([
             Adoption.find({ status: "approved" })
-                .select("name age gender vaccinated description imageUrl reportername location phone")
+                .select("name age gender vaccinated description imageUrl reportername location phone updatedAt")
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -476,8 +481,13 @@ app.get("/api/approved-puppies", async(req, res) => {
             Adoption.countDocuments({ status: "approved" })
         ]);
 
+        const dataWithCalculatedAge = data.map(puppy => ({
+            ...puppy,
+            age: calculateCurrentAge(puppy.age, puppy.updatedAt)
+        }));
+
         res.json({
-            data,
+            data: dataWithCalculatedAge,
             pagination: {
                 page,
                 limit,
@@ -499,11 +509,16 @@ app.get("/api/approved-puppies", async(req, res) => {
 app.get("/api/adopted-puppies", async(req, res) => {
     try {
         const data = await Adoption.find({ status: "adopted" })
-            .select("name age location imageUrl status")
+            .select("name age location imageUrl status updatedAt")
             .sort({ updatedAt: -1 })
             .lean();
 
-        res.json(data);
+        const dataWithCalculatedAge = data.map(puppy => ({
+            ...puppy,
+            age: calculateCurrentAge(puppy.age, puppy.updatedAt)
+        }));
+
+        res.json(dataWithCalculatedAge);
     } catch (err) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Fetch adopted puppies error:", err.message);
