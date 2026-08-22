@@ -1,0 +1,33 @@
+# ========================
+# TAILS OF BIJAPUR — REPO ROOT
+# api/.gitignore only covers api/, so these repeat here for the whole repo.
+# ========================
+
+# 1. Dependencies
+node_modules/
+**/node_modules/
+
+# 2. Environment variables (protects database passwords)
+.env
+.env.*
+**/.env
+**/.env.*
+
+# ...but the templates are meant to be shared. Keep them committable.
+!.env.example
+!**/.env.example
+
+# 3. Build outputs
+dist/
+build/
+frontend/dist/
+
+# 4. Uploaded files
+uploads/
+**/uploads/
+
+# 5. Logs & OS files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

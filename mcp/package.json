@@ -1,0 +1,23 @@
+{
+    "name": "tails-of-bijapur-mcp",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "description": "MCP server exposing Tails of Bijapur adoption and volunteer records over stdio",
+    "bin": {
+        "tails-of-bijapur-mcp": "src/index.js"
+    },
+    "scripts": {
+        "start": "node src/index.js",
+        "inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.30.0",
+        "dotenv": "^16.6.1",
+        "mongoose": "^9.3.3",
+        "zod": "^3.25.0"
+    }
+}
