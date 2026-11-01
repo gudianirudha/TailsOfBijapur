@@ -85,16 +85,56 @@ function Countdown() {
   ];
 
   return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2 tabular-nums" role="timer" aria-label="Countdown to adoption drive">
+    <div className="drive-countdown" role="timer" aria-label="Countdown to adoption drive">
       {units.map(([label, value]) => (
-        <div key={label} className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+        <div key={label} className="drive-countdown__unit">
+          <span className="drive-countdown__value">
             <RollingNumber value={label === "days" ? String(value) : String(value).padStart(2, "0")} />
           </span>
-          <span className="text-xs uppercase tracking-[0.12em] text-white/55">{label}</span>
+          <span className="drive-countdown__label">{label}</span>
         </div>
       ))}
     </div>
+  );
+}
+
+function ScreenPuppy() {
+  const reduce = useReducedMotion();
+  const [viewportWidth, setViewportWidth] = useState(0);
+
+  useEffect(() => {
+    const updateViewportWidth = () => setViewportWidth(window.innerWidth);
+    updateViewportWidth();
+    window.addEventListener("resize", updateViewportWidth);
+    return () => window.removeEventListener("resize", updateViewportWidth);
+  }, []);
+
+  const animate = reduce
+    ? { x: 0, y: 0 }
+    : viewportWidth
+      ? { x: [-112, viewportWidth * 0.34, viewportWidth * 0.68, viewportWidth + 112], y: [0, -12, 0, -8] }
+      : { x: 0, y: 0 };
+
+  return (
+    <motion.a
+      className="drive-screen-puppy"
+      href="/adopt"
+      aria-label="Meet the puppies looking for a home"
+      initial={reduce ? false : { x: -112, y: 0 }}
+      animate={animate}
+      transition={reduce ? { duration: 0 } : { duration: 16, ease: "easeInOut", repeat: Infinity, repeatDelay: 3 }}
+      whileHover={reduce ? undefined : { scale: 1.08 }}
+      whileFocus={reduce ? undefined : { scale: 1.08 }}
+    >
+      <motion.span
+        className="drive-screen-puppy__photo"
+        animate={reduce ? undefined : { rotate: [0, 2, -2, 0] }}
+        transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <img src="/images/adopt/ginger.jpg" alt="" />
+      </motion.span>
+      <span className="drive-screen-puppy__label">Meet me <ArrowUpRight size={13} /></span>
+    </motion.a>
   );
 }
 
@@ -465,9 +505,13 @@ export default function AdoptionDrive() {
 
             <Reveal delay={0.15} className="drive-hero__visual">
               <div className="drive-photo">
-                <img
-                  src="/images/adopt/puppies.png"
-                  alt="A cheerful group of puppies ready to meet their new families"
+                <video
+                  src="https://res.cloudinary.com/ds53m10cl/video/upload/v1793527474/Puppy_vqairh.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  aria-hidden="true"
                 />
                 <div className="drive-photo__caption">
                   <span className="drive-photo__sparkle"><Sparkles size={16} /></span>
@@ -485,15 +529,15 @@ export default function AdoptionDrive() {
           <Reveal delay={0.35} className="drive-eventbar">
             <div className="drive-eventbar__detail">
               <span className="drive-eventbar__icon"><CalendarDays size={18} /></span>
-              <span><strong>Sunday, 6 December 2026</strong><small>Save the date</small></span>
+              <span className="drive-eventbar__copy"><strong>Sunday, 6 December 2026</strong><small>Save the date</small></span>
             </div>
             <div className="drive-eventbar__detail">
               <span className="drive-eventbar__icon"><Clock3 size={18} /></span>
-              <span><strong>10:00 AM onwards</strong><small>Come by anytime</small></span>
+              <span className="drive-eventbar__copy"><strong>10:00 AM onwards</strong><small>Come by anytime</small></span>
             </div>
             <div className="drive-eventbar__detail">
               <span className="drive-eventbar__icon"><MapPin size={18} /></span>
-              <span><strong>Bijapur, Karnataka</strong><small>Venue to be announced</small></span>
+              <span className="drive-eventbar__copy"><strong>Bijapur, Karnataka</strong><small>Venue to be announced</small></span>
             </div>
             <div className="drive-eventbar__countdown">
               <span className="drive-countdown-label">The big day in</span>
@@ -557,6 +601,7 @@ export default function AdoptionDrive() {
           </Link>
         </div>
       </section>
+      <ScreenPuppy />
     </div>
   );
 }

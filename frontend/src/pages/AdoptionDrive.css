@@ -164,6 +164,7 @@
 .drive-hero__visual {
   position: relative;
   min-width: 0;
+  align-self: center;
   padding: 18px 22px 24px 0;
 }
 
@@ -171,23 +172,24 @@
   position: relative;
   z-index: 1;
   overflow: hidden;
-  aspect-ratio: 1.22;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   border: 8px solid rgba(255, 250, 240, 0.92);
-  border-radius: 44% 44% 20px 20px;
+  border-radius: 28px;
   background: #fff;
   box-shadow: 0 28px 80px rgba(7, 23, 18, 0.32);
 }
 
-.drive-photo img {
+.drive-photo video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 54%;
+  object-position: center;
   transition: transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.drive-photo:hover img {
+.drive-photo:hover video {
   transform: scale(1.035);
 }
 
@@ -249,61 +251,156 @@
   background: #f5a46f;
 }
 
+.drive-screen-puppy {
+  position: fixed;
+  z-index: 40;
+  bottom: 20px;
+  left: 0;
+  display: flex;
+  width: 88px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #fffaf0;
+  text-decoration: none;
+  will-change: transform;
+}
+
+.drive-screen-puppy__photo {
+  display: block;
+  width: 66px;
+  height: 66px;
+  overflow: hidden;
+  border: 3px solid #fffaf0;
+  border-radius: 50%;
+  background: #e8d2aa;
+  box-shadow: 0 5px 18px rgba(14, 11, 9, 0.32);
+}
+
+.drive-screen-puppy__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+}
+
+.drive-screen-puppy__label {
+  display: inline-flex;
+  min-height: 23px;
+  align-items: center;
+  gap: 3px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 250, 240, 0.24);
+  border-radius: 999px;
+  background: rgba(44, 37, 34, 0.88);
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.drive-screen-puppy:focus-visible {
+  border-radius: 999px;
+  outline: 3px solid #f5a46f;
+  outline-offset: 3px;
+}
+
 .drive-eventbar {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(250px, 1.2fr);
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(250px, 1.25fr);
   align-items: center;
-  padding: 24px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  margin-bottom: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 20px 60px rgba(7, 23, 18, 0.16);
 }
 
 .drive-eventbar__detail {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   min-width: 0;
+  min-height: 62px;
+  padding: 0 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .drive-eventbar__icon {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   flex: 0 0 auto;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   color: #f5a46f;
+  background: rgba(245, 164, 111, 0.08);
 }
 
-.drive-eventbar__detail strong,
-.drive-eventbar__detail small {
+.drive-eventbar__copy {
+  min-width: 0;
+}
+
+.drive-eventbar__copy strong,
+.drive-eventbar__copy small {
   display: block;
 }
 
-.drive-eventbar__detail strong {
-  font-size: 12px;
+.drive-eventbar__copy strong {
+  font-size: 13px;
   font-weight: 600;
+  line-height: 1.35;
 }
 
-.drive-eventbar__detail small {
+.drive-eventbar__copy small {
   margin-top: 4px;
   color: rgba(255, 250, 240, 0.5);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .drive-eventbar__countdown {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-left: 22px;
-  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  gap: 11px;
+  min-width: 0;
+  padding-left: 20px;
 }
 
 .drive-countdown-label {
   color: rgba(255, 250, 240, 0.5);
   font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.drive-countdown {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.drive-countdown__unit {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+
+.drive-countdown__value {
+  color: #fffaf0;
+  font-size: clamp(20px, 2vw, 27px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.drive-countdown__label {
+  color: rgba(255, 250, 240, 0.5);
+  font-size: 9px;
   text-transform: uppercase;
 }
 
@@ -707,12 +804,21 @@
 
   .drive-eventbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    row-gap: 22px;
+    row-gap: 12px;
+  }
+
+  .drive-eventbar__detail:nth-child(2) {
+    border-right: 0;
+  }
+
+  .drive-eventbar__detail:nth-child(3) {
+    border-right: 0;
   }
 
   .drive-eventbar__countdown {
-    padding-left: 0;
-    border-left: 0;
+    grid-column: 1 / -1;
+    padding: 14px 16px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .drive-promises__grid {
@@ -751,9 +857,9 @@
   }
 
   .drive-photo {
-    aspect-ratio: 1.16;
+    aspect-ratio: 16 / 9;
     border-width: 6px;
-    border-radius: 42% 42% 18px 18px;
+    border-radius: 22px;
   }
 
   .drive-photo__note {
@@ -768,33 +874,68 @@
     height: 62px;
   }
 
+  .drive-screen-puppy {
+    bottom: 14px;
+    width: 72px;
+  }
+
+  .drive-screen-puppy__photo {
+    width: 54px;
+    height: 54px;
+  }
+
+  .drive-screen-puppy__label {
+    min-height: 21px;
+    font-size: 8px;
+  }
+
   .drive-eventbar {
     grid-template-columns: 1fr 1fr;
-    gap: 20px 12px;
-    padding: 22px 0 28px;
+    gap: 6px 0;
+    padding: 14px 8px;
+    border-radius: 18px;
   }
 
   .drive-eventbar__detail {
-    gap: 9px;
+    gap: 8px;
+    min-height: 56px;
+    padding: 0 8px;
+  }
+
+  .drive-eventbar__detail:nth-child(2) {
+    border-right: 0;
+  }
+
+  .drive-eventbar__detail:nth-child(3) {
+    border-right: 0;
   }
 
   .drive-eventbar__icon {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
   }
 
-  .drive-eventbar__detail strong {
+  .drive-eventbar__copy strong {
     font-size: 10px;
   }
 
-  .drive-eventbar__detail small {
+  .drive-eventbar__copy small {
     font-size: 9px;
   }
 
   .drive-eventbar__countdown {
     grid-column: 1 / -1;
-    padding-top: 18px;
-    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    gap: 10px;
+    padding: 14px 8px 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .drive-countdown {
+    max-width: 310px;
+  }
+
+  .drive-countdown__value {
+    font-size: 23px;
   }
 
   .drive-promises {
