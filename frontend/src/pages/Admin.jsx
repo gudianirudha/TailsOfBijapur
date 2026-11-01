@@ -4,6 +4,7 @@ import { LogOut, Check, X, PawPrint, Users, ShieldAlert, Phone, Mail } from "luc
 
 export default function Admin() {
   const [adoptions, setAdoptions] = useState([]);
+  const [adoptionInterests, setAdoptionInterests] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
   const navigate = useNavigate();
 
@@ -14,6 +15,7 @@ export default function Admin() {
       return;
     }
     fetchAdoptions(token);
+    fetchAdoptionInterests(token);
     fetchVolunteers(token);
   }, [navigate]);
 
@@ -33,6 +35,25 @@ export default function Admin() {
     } catch (err) {
       if (process.env.NODE_ENV !== "production") {
         console.error("Failed to fetch adoptions");
+      }
+    }
+  }
+
+  async function fetchAdoptionInterests(token) {
+    try {
+      const res = await fetch("/api/admin/adoption-interests", {
+        headers: { Authorization: "Bearer " + token },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch adoption enquiries");
+      setAdoptionInterests(await res.json());
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to fetch adoption enquiries");
       }
     }
   }
@@ -103,6 +124,30 @@ export default function Admin() {
     } catch (err) {
       if (process.env.NODE_ENV !== "production") {
         console.error("Update volunteer error");
+      }
+    }
+  }
+
+  async function markAdoptionInterestContacted(id) {
+    const token = sessionStorage.getItem("adminToken");
+    try {
+      const res = await fetch(`/api/admin/adoption-interests/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        credentials: "include",
+        body: JSON.stringify({ status: "contacted" }),
+      });
+      if (!res.ok) {
+        alert("Failed to update adoption enquiry");
+        return;
+      }
+      setAdoptionInterests((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Update adoption enquiry error");
       }
     }
   }
@@ -214,6 +259,63 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ================= ADOPTION INTEREST SECTION ================= */}
+        <section>
+          <div className="flex items-center gap-4 mb-10">
+            <div className="bg-orange-600/20 p-3 rounded-xl text-orange-500">
+              <PawPrint size={24} />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Potential Adopters</h2>
+          </div>
+
+          {adoptionInterests.length === 0 ? (
+            <div className="bg-[#111] border border-dashed border-white/10 rounded-[3rem] p-12 text-center">
+              <p className="text-xl font-bold text-gray-500">No new adoption enquiries.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {adoptionInterests.map((item) => (
+                <article key={item._id} className="bg-[#111] border border-white/10 rounded-[2rem] p-7 md:p-8 space-y-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-orange-500 text-[10px] font-black uppercase tracking-widest">
+                        Interested in {item.puppyName || "a puppy"}
+                      </p>
+                      <h3 className="mt-2 text-2xl font-black tracking-tight text-white">{item.name}</h3>
+                    </div>
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-400">
+                    <a className="flex items-center gap-2 hover:text-orange-400" href={`mailto:${item.email}`}>
+                      <Mail size={15} /> {item.email}
+                    </a>
+                    <a className="flex items-center gap-2 hover:text-orange-400" href={`tel:${item.phone}`}>
+                      <Phone size={15} /> {item.phone}
+                    </a>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <p className="rounded-xl bg-white/5 p-3 text-gray-400">Area <span className="mt-1 block font-semibold text-white">{item.city}</span></p>
+                    <p className="rounded-xl bg-white/5 p-3 text-gray-400">Home <span className="mt-1 block font-semibold capitalize text-white">{item.homeType}</span></p>
+                    <p className="rounded-xl bg-white/5 p-3 text-gray-400">Other pets <span className="mt-1 block font-semibold text-white">{item.hasPets ? "Yes" : "No"}</span></p>
+                    <p className="rounded-xl bg-white/5 p-3 text-gray-400">Dog experience <span className="mt-1 block font-semibold text-white">{item.experience}</span></p>
+                  </div>
+
+                  <button
+                    onClick={() => markAdoptionInterestContacted(item._id)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-5 py-3 text-xs font-black uppercase tracking-widest text-orange-400 transition-colors hover:bg-orange-500 hover:text-white"
+                  >
+                    <Check size={16} /> Mark contacted
+                  </button>
+                </article>
               ))}
             </div>
           )}

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
@@ -21,6 +21,8 @@ import AdminLogin from './pages/AdminLogin'
 import Awareness from './pages/Awareness';
 import Donate from './pages/Donate';
 import Impact from './pages/Impact'
+// Heavy page (WebGL + framer-motion) — split out of the main bundle
+const AdoptionDrive = lazy(() => import('./pages/AdoptionDrive'))
 
 // 2. FIRE THE TRACKING BEACON
 inject();
@@ -45,6 +47,7 @@ function App() {
           <Route path="awareness" element={<Awareness />} />
           <Route path="donate" element={<Donate />} />
           <Route path="impact" element={<Impact />} />
+          <Route path="drive" element={<Suspense fallback={<div className="min-h-screen bg-[#0A0A0A]" />}><AdoptionDrive /></Suspense>} />
         </Route>
       </Routes>
     </BrowserRouter>

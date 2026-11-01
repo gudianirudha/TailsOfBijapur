@@ -34,6 +34,7 @@ const Nav = () => {
   const navLinks = [
     { name: "About", path: "/about" },
     { name: "Adopt", path: "/adopt" },
+    { name: "Drive", path: "/drive" },
     { name: "Volunteer", path: "/volunteer" },
     { name: "Awareness", path: "/awareness" },
     { name: "Support", path: "/doctors" },
