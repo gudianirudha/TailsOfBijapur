@@ -254,27 +254,38 @@
 .drive-screen-puppy {
   position: fixed;
   z-index: 40;
-  bottom: 20px;
-  left: 0;
+  bottom: 22px;
+  left: 22px;
   display: flex;
-  width: 88px;
-  flex-direction: column;
+  width: auto;
   align-items: center;
-  gap: 5px;
+  gap: 9px;
+  padding: 6px 14px 6px 6px;
+  border: 1px solid rgba(255, 250, 240, 0.18);
+  border-radius: 999px;
   color: #fffaf0;
+  background: rgba(44, 37, 34, 0.92);
+  box-shadow: 0 8px 26px rgba(14, 11, 9, 0.24);
+  backdrop-filter: blur(14px);
   text-decoration: none;
   will-change: transform;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.drive-screen-puppy:hover {
+  background: #3a302b;
+  box-shadow: 0 11px 32px rgba(14, 11, 9, 0.3);
 }
 
 .drive-screen-puppy__photo {
   display: block;
-  width: 66px;
-  height: 66px;
+  width: 44px;
+  height: 44px;
   overflow: hidden;
-  border: 3px solid #fffaf0;
+  border: 2px solid rgba(255, 250, 240, 0.8);
   border-radius: 50%;
   background: #e8d2aa;
-  box-shadow: 0 5px 18px rgba(14, 11, 9, 0.32);
+  box-shadow: 0 3px 12px rgba(14, 11, 9, 0.22);
 }
 
 .drive-screen-puppy__photo img {
@@ -287,14 +298,9 @@
 
 .drive-screen-puppy__label {
   display: inline-flex;
-  min-height: 23px;
   align-items: center;
-  gap: 3px;
-  padding: 0 8px;
-  border: 1px solid rgba(255, 250, 240, 0.24);
-  border-radius: 999px;
-  background: rgba(44, 37, 34, 0.88);
-  font-size: 9px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -581,6 +587,98 @@
   max-width: 600px;
 }
 
+.drive-attendance {
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.drive-attendance__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.drive-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 250, 240, 0.9);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.drive-live-badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b7e5a5;
+  box-shadow: 0 0 0 4px rgba(183, 229, 165, 0.12);
+  animation: drive-live-pulse 2s ease-out infinite;
+}
+
+.drive-live-badge--paused {
+  color: #ffd1ad;
+}
+
+.drive-live-badge--paused .drive-live-badge__dot {
+  background: #f5a46f;
+  box-shadow: 0 0 0 4px rgba(245, 164, 111, 0.12);
+  animation: none;
+}
+
+.drive-attendance__updated {
+  color: rgba(255, 250, 240, 0.5);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.drive-attendance__totals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 20px;
+  margin-top: 14px;
+}
+
+.drive-attendance__totals p {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: rgba(255, 250, 240, 0.68);
+  font-size: 13px;
+}
+
+.drive-attendance__totals strong {
+  color: #fffaf0;
+  font-size: clamp(30px, 4vw, 42px);
+  font-weight: 600;
+  letter-spacing: -0.07em;
+  line-height: 1;
+}
+
+.drive-attendance__groups {
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 250, 240, 0.16);
+  border-radius: 999px;
+  color: rgba(255, 250, 240, 0.72);
+  font-size: 10px;
+}
+
+.drive-attendance__empty,
+.drive-attendance__error {
+  margin-top: 14px;
+  color: rgba(255, 250, 240, 0.68);
+  font-size: 12px;
+}
+
+.drive-attendance__error {
+  color: #ffd1ad;
+}
+
 .drive-rsvp__card {
   padding: clamp(24px, 4vw, 42px);
   border: 1px solid rgba(255, 255, 255, 0.55);
@@ -711,6 +809,162 @@
   color: #a64c2b;
 }
 
+.drive-proud {
+  position: relative;
+  overflow: hidden;
+  padding: 104px 0;
+  background: #f7f3e9;
+}
+
+.drive-proud::before {
+  position: absolute;
+  top: -190px;
+  right: -120px;
+  width: 430px;
+  height: 430px;
+  border: 1px solid rgba(166, 76, 43, 0.1);
+  border-radius: 50%;
+  box-shadow: 0 0 0 42px rgba(166, 76, 43, 0.025), 0 0 0 84px rgba(166, 76, 43, 0.02);
+  content: "";
+  pointer-events: none;
+}
+
+.drive-proud__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.82fr);
+  align-items: start;
+  gap: clamp(42px, 8vw, 108px);
+}
+
+.drive-proud__copy h2 {
+  margin-top: 15px;
+  font-size: clamp(2.8rem, 5.2vw, 5rem);
+  font-weight: 550;
+  letter-spacing: -0.08em;
+  line-height: 0.98;
+}
+
+.drive-proud__copy h2 span {
+  color: #a64c2b;
+}
+
+.drive-proud__lead {
+  max-width: 520px;
+  margin-top: 23px;
+  color: #51463e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(19px, 2.2vw, 24px);
+  line-height: 1.45;
+}
+
+.drive-proud__description {
+  max-width: 560px;
+  margin-top: 14px;
+  color: #716a61;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.drive-proud__features {
+  display: grid;
+  gap: 0;
+  max-width: 560px;
+  margin-top: 29px;
+  border-top: 1px solid #e4dacb;
+}
+
+.drive-proud__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 17px 0;
+  border-bottom: 1px solid #e4dacb;
+}
+
+.drive-proud__feature-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  color: #a64c2b;
+  background: #f0e2d3;
+}
+
+.drive-proud__feature strong,
+.drive-proud__feature small {
+  display: block;
+}
+
+.drive-proud__feature strong {
+  color: #39312b;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.drive-proud__feature small {
+  margin-top: 3px;
+  color: #777066;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.drive-proud__availability {
+  margin-top: 19px;
+  color: #8b4b30;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.drive-proud__availability span {
+  margin-inline: 5px;
+  color: #d29b70;
+}
+
+.drive-proud__visual {
+  min-width: 0;
+}
+
+.drive-proud__art {
+  position: relative;
+  display: flex;
+  height: clamp(450px, 42vw, 520px);
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 30px;
+  border: 1px solid rgba(255, 250, 240, 0.16);
+  border-radius: 220px 220px 26px 26px;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(245, 164, 111, 0.2), transparent 58%),
+    #342a26;
+  box-shadow: 0 24px 65px rgba(57, 42, 31, 0.17);
+}
+
+.drive-proud__art::before {
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(255, 250, 240, 0.2);
+  border-radius: 210px 210px 18px 18px;
+  content: "";
+  pointer-events: none;
+}
+
+.drive-proud__art img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  aspect-ratio: 794 / 1123;
+  object-fit: contain;
+}
+
 .drive-interest__card {
   padding: clamp(24px, 4vw, 42px);
   border: 1px solid #e8dece;
@@ -824,6 +1078,15 @@
   .drive-promises__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .drive-proud__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+    gap: 36px;
+  }
+
+  .drive-proud__art {
+    min-height: 390px;
+  }
 }
 
 @media (max-width: 700px) {
@@ -875,18 +1138,19 @@
   }
 
   .drive-screen-puppy {
-    bottom: 14px;
-    width: 72px;
+    bottom: 12px;
+    left: 12px;
+    gap: 7px;
+    padding: 5px 11px 5px 5px;
   }
 
   .drive-screen-puppy__photo {
-    width: 54px;
-    height: 54px;
+    width: 38px;
+    height: 38px;
   }
 
   .drive-screen-puppy__label {
-    min-height: 21px;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .drive-eventbar {
@@ -995,6 +1259,29 @@
     gap: 32px;
   }
 
+  .drive-proud {
+    padding: 76px 0;
+  }
+
+  .drive-proud__grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .drive-proud__copy h2 {
+    font-size: clamp(2.8rem, 12vw, 4.2rem);
+  }
+
+  .drive-proud__art {
+    height: 390px;
+    padding: 28px 24px;
+    border-radius: 190px 190px 22px 22px;
+  }
+
+  .drive-proud__art::before {
+    border-radius: 178px 178px 15px 15px;
+  }
+
   .drive-interest__intro {
     position: static;
   }
@@ -1038,4 +1325,14 @@
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+
+  .drive-live-badge__dot {
+    animation: none;
+  }
+}
+
+@keyframes drive-live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(183, 229, 165, 0.3); }
+  70% { box-shadow: 0 0 0 6px rgba(183, 229, 165, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(183, 229, 165, 0); }
 }

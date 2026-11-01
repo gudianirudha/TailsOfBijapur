@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   AlertCircle,
   ArrowDown,
   ArrowUpRight,
+  Award,
+  Camera,
   CalendarDays,
   CheckCircle2,
   Clock3,
@@ -100,40 +102,44 @@ function Countdown() {
 
 function ScreenPuppy() {
   const reduce = useReducedMotion();
-  const [viewportWidth, setViewportWidth] = useState(0);
+  const [showShortcut, setShowShortcut] = useState(false);
 
   useEffect(() => {
-    const updateViewportWidth = () => setViewportWidth(window.innerWidth);
-    updateViewportWidth();
-    window.addEventListener("resize", updateViewportWidth);
-    return () => window.removeEventListener("resize", updateViewportWidth);
+    const occupiedSections = new Set();
+    const sections = document.querySelectorAll(".drive-hero, #adoption-interest, #rsvp");
+    if (!sections.length) {
+      setShowShortcut(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) occupiedSections.add(entry.target);
+        else occupiedSections.delete(entry.target);
+      });
+      setShowShortcut(occupiedSections.size === 0);
+    });
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
   }, []);
 
-  const animate = reduce
-    ? { x: 0, y: 0 }
-    : viewportWidth
-      ? { x: [-112, viewportWidth * 0.34, viewportWidth * 0.68, viewportWidth + 112], y: [0, -12, 0, -8] }
-      : { x: 0, y: 0 };
+  if (!showShortcut) return null;
 
   return (
     <motion.a
       className="drive-screen-puppy"
       href="/adopt"
       aria-label="Meet the puppies looking for a home"
-      initial={reduce ? false : { x: -112, y: 0 }}
-      animate={animate}
-      transition={reduce ? { duration: 0 } : { duration: 16, ease: "easeInOut", repeat: Infinity, repeatDelay: 3 }}
+      initial={false}
+      animate={reduce ? undefined : { y: [0, -3, 0] }}
+      transition={reduce ? undefined : { duration: 3.5, ease: "easeInOut", repeat: Infinity }}
       whileHover={reduce ? undefined : { scale: 1.08 }}
       whileFocus={reduce ? undefined : { scale: 1.08 }}
     >
-      <motion.span
-        className="drive-screen-puppy__photo"
-        animate={reduce ? undefined : { rotate: [0, 2, -2, 0] }}
-        transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut" }}
-      >
+      <span className="drive-screen-puppy__photo">
         <img src="/images/adopt/ginger.jpg" alt="" />
-      </motion.span>
-      <span className="drive-screen-puppy__label">Meet me <ArrowUpRight size={13} /></span>
+      </span>
+      <span className="drive-screen-puppy__label">Meet a pup <ArrowUpRight size={13} /></span>
     </motion.a>
   );
 }
@@ -170,26 +176,44 @@ const BEFORE_YOU_ADOPT = [
 ];
 
 function RsvpSection() {
-  const [stats, setStats] = useState({ people: 0, groups: 0, recent: [] });
+  const [stats, setStats] = useState({ people: 0, groups: 0 });
   const [statsError, setStatsError] = useState("");
+  const [statsLoaded, setStatsLoaded] = useState(false);
+  const [statsUpdatedAt, setStatsUpdatedAt] = useState(null);
   const [form, setForm] = useState({ name: "", phone: "", guests: 1 });
   const [status, setStatus] = useState({ type: null, msg: "" });
   const [busy, setBusy] = useState(false);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await fetch("/api/drive/rsvps");
       if (!response.ok) throw new Error("Unable to load attendance right now.");
-      setStats(await response.json());
+      const data = await response.json();
+      if (!Number.isFinite(data.people) || !Number.isFinite(data.groups)) {
+        throw new Error("Attendance totals are unavailable.");
+      }
+      setStats({ people: data.people, groups: data.groups });
       setStatsError("");
+      setStatsLoaded(true);
+      setStatsUpdatedAt(new Date());
     } catch {
       setStatsError("Attendance totals are temporarily unavailable.");
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadStats();
-  }, []);
+    const refreshVisibleStats = () => {
+      if (document.visibilityState === "visible") loadStats();
+    };
+    const timer = window.setInterval(refreshVisibleStats, 30_000);
+    document.addEventListener("visibilitychange", refreshVisibleStats);
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshVisibleStats);
+    };
+  }, [loadStats]);
 
   async function submit(event) {
     event.preventDefault();
@@ -207,7 +231,7 @@ function RsvpSection() {
 
       setStatus({ type: "ok", msg: "You’re on the list. See you on 6 December!" });
       setForm({ name: "", phone: "", guests: 1 });
-      loadStats();
+      await loadStats();
     } catch (error) {
       setStatus({ type: "err", msg: error.message });
     } finally {
@@ -228,18 +252,35 @@ function RsvpSection() {
             Drop by, meet the pups and ask us anything. Let us know you’re coming so we can make room for you.
           </p>
 
-          <div className="mt-10 border-t border-white/15 pt-6">
-            {stats.people > 0 ? (
-              <p className="text-sm text-white/60">
-                <span className="mr-2 text-3xl font-semibold tracking-tight text-white">
-                  <RollingNumber value={String(stats.people)} />
+          <div className="drive-attendance" aria-live="polite">
+            <div className="drive-attendance__topline">
+              <span className={`drive-live-badge${statsError ? " drive-live-badge--paused" : ""}`}>
+                <span className="drive-live-badge__dot" />
+                {statsError ? "Updates paused" : "Live attendance"}
+              </span>
+              {statsUpdatedAt && (
+                <span className="drive-attendance__updated">
+                  Updated {statsUpdatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                 </span>
-                kind humans are coming
-              </p>
+              )}
+            </div>
+            {stats.people > 0 ? (
+              <div className="drive-attendance__totals">
+                <p>
+                  <strong><RollingNumber value={String(stats.people)} /></strong>
+                  <span>people coming</span>
+                </p>
+                <span className="drive-attendance__groups">
+                  <RollingNumber value={String(stats.groups)} /> RSVP groups
+                </span>
+              </div>
             ) : (
-              <p className="text-sm text-white/60">
-                {statsError || "Be one of the first to save a spot."}
+              <p className="drive-attendance__empty">
+                {statsError || (statsLoaded ? "Be the first to save a spot." : "Checking who’s coming…")}
               </p>
+            )}
+            {statsError && statsLoaded && (
+              <p className="drive-attendance__error">{statsError} Showing the last available total.</p>
             )}
           </div>
         </Reveal>
@@ -445,6 +486,55 @@ function AdoptionInterestSection() {
   );
 }
 
+function ProudIndieParentSection() {
+  return (
+    <section className="drive-proud">
+      <div className="drive-wrap drive-proud__grid">
+        <Reveal className="drive-proud__copy">
+          <p className="drive-eyebrow">A little celebration of a big decision</p>
+          <h2>
+            Proud Indie
+            <span className="drive-serif"> Parent!</span>
+          </h2>
+          <p className="drive-proud__lead">
+            Every Indie deserves a loving home, and every adoption deserves to be celebrated.
+          </p>
+          <p className="drive-proud__description">
+            Stop by our special photo booth at the adoption drive. Capture your first moments with your new family member and take home a memory to cherish. Every adopter will also receive a special Adoption Certificate.
+          </p>
+          <div className="drive-proud__features">
+            <div className="drive-proud__feature">
+              <span className="drive-proud__feature-icon"><Camera size={19} /></span>
+              <span>
+                <strong>Your first family photo deserves a frame.</strong>
+                <small>Visit the photo booth and take home a special memory.</small>
+              </span>
+            </div>
+            <div className="drive-proud__feature">
+              <span className="drive-proud__feature-icon"><Award size={19} /></span>
+              <span>
+                <strong>A certificate for every adopter.</strong>
+                <small>A little keepsake to celebrate your new family member.</small>
+              </span>
+            </div>
+          </div>
+          <p className="drive-proud__availability">Proud Indie Parent Photo Booth <span>·</span> Available at the adoption drive</p>
+        </Reveal>
+
+        <Reveal delay={0.12} className="drive-proud__visual">
+          <div className="drive-proud__art">
+            <img
+              src="https://res.cloudinary.com/ds53m10cl/image/upload/v1793546155/PROUD_INDIE_PARENT_knnxhn.svg"
+              alt="Proud Indie Parent"
+              loading="lazy"
+            />
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 export default function AdoptionDrive() {
   const reduce = useReducedMotion();
 
@@ -588,6 +678,7 @@ export default function AdoptionDrive() {
       </section>
 
       <AdoptionInterestSection />
+      <ProudIndieParentSection />
       <RsvpSection />
 
       <section className="drive-lastcall">
