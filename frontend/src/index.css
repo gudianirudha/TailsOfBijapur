@@ -64,3 +64,18 @@ body {
     opacity: 1;
     transform: translateX(0) translateY(0);
 }
+
+/* Outlined accent text + marquee (shared) */
+.stroke-text {
+    -webkit-text-stroke: 2px white;
+    color: transparent;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+    animation: marquee 20s linear infinite;
+}

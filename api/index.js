@@ -114,6 +114,29 @@ volunteerSchema.index({ email: 1 });
 const Adoption = mongoose.model("Adoption", adoptionSchema);
 const Volunteer = mongoose.model("Volunteer", volunteerSchema);
 
+const driveRsvpSchema = new mongoose.Schema({
+    name: { type: String, required: true, maxlength: 60 },
+    phone: { type: String, required: true },
+    guests: { type: Number, default: 1, min: 1, max: 10 },
+    drive: { type: String, default: "2026-12-06" },
+}, { timestamps: true });
+const DriveRsvp = mongoose.model("DriveRsvp", driveRsvpSchema);
+
+const adoptionInterestSchema = new mongoose.Schema({
+    name: { type: String, required: true, maxlength: 80 },
+    email: { type: String, required: true, maxlength: 254, lowercase: true },
+    phone: { type: String, required: true, maxlength: 20 },
+    city: { type: String, required: true, maxlength: 100 },
+    homeType: { type: String, enum: ["owned", "rented", "other"], required: true },
+    hasPets: { type: Boolean, required: true },
+    experience: { type: String, required: true, maxlength: 1200 },
+    puppyName: { type: String, maxlength: 80, default: "" },
+    consentAt: { type: Date, required: true },
+    status: { type: String, enum: ["pending", "contacted"], default: "pending", index: true },
+}, { timestamps: true });
+adoptionInterestSchema.index({ status:  1, createdAt: -1 });
+const AdoptionInterest = mongoose.model("AdoptionInterest", adoptionInterestSchema);
+
 /* ==============================
    Cloudinary Upload
 ============================== */
@@ -289,6 +312,124 @@ app.post("/api/volunteer", async(req, res) => {
 });
 
 /* ==============================
+   Adoption Drive RSVPs
+============================== */
+
+const driveLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const adoptionInterestLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+
+app.post("/api/drive/rsvp", driveLimiter, async(req, res) => {
+    try {
+        const { name, phone } = req.body;
+        const guests = Math.min(10, Math.max(1, parseInt(req.body.guests) || 1));
+        if (!name || !phone) return res.status(400).json({ error: "Name and phone are required" });
+        if (!isValidPhone(phone)) return res.status(400).json({ error: "Invalid phone format" });
+
+        const cleanPhone = sanitizeInput(phone);
+        const exists = await DriveRsvp.exists({ phone: cleanPhone });
+        if (exists) return res.status(409).json({ error: "This number is already registered" });
+
+        await DriveRsvp.create({ name: sanitizeInput(name).slice(0, 60), phone: cleanPhone, guests });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: "RSVP failed" });
+    }
+});
+
+app.get("/api/drive/rsvps", async(req, res) => {
+    try {
+        const [agg, recent] = await Promise.all([
+            DriveRsvp.aggregate([{ $group: { _id: null, people: { $sum: "$guests" }, groups: { $sum: 1 } } }]),
+            DriveRsvp.find().sort({ createdAt: -1 }).limit(12).select("name guests createdAt").lean(),
+        ]);
+        res.json({
+            people: agg[0]?.people || 0,
+            groups: agg[0]?.groups || 0,
+            // first names only, for privacy
+            recent: recent.map(r => ({ name: String(r.name).trim().split(/\s+/)[0], guests: r.guests })),
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch" });
+    }
+});
+
+app.post("/api/drive/adoption-interest", adoptionInterestLimiter, async(req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+        const { name, email, phone, city, homeType, hasPets, experience, puppyName, consent } = body;
+
+        const requiredFields = [name, email, phone, city, homeType, hasPets, experience];
+        if (requiredFields.some((value) => typeof value !== "string" || !value.trim()) || consent !== true) {
+            return res.status(400).json({ error: "Please complete all required fields and consent to being contacted." });
+        }
+        if (puppyName !== undefined && typeof puppyName !== "string") {
+            return res.status(400).json({ error: "Please enter a valid puppy name or leave it blank." });
+        }
+
+        const cleanName = sanitizeInput(name);
+        const cleanEmail = sanitizeInput(email).toLowerCase();
+        const cleanPhone = sanitizeInput(phone);
+        const cleanCity = sanitizeInput(city);
+        const cleanHomeType = homeType.trim();
+        const cleanHasPets = hasPets.trim();
+        const cleanExperience = sanitizeInput(experience);
+        const cleanPuppyName = sanitizeInput(puppyName || "");
+
+        if (!isValidEmail(cleanEmail)) return res.status(400).json({ error: "Please enter a valid email address." });
+        if (!isValidPhone(cleanPhone)) return res.status(400).json({ error: "Please enter a valid phone number." });
+        if (!["owned", "rented", "other"].includes(cleanHomeType)) {
+            return res.status(400).json({ error: "Please select a valid home type." });
+        }
+        if (!["yes", "no"].includes(cleanHasPets)) {
+            return res.status(400).json({ error: "Please select whether you have other pets at home." });
+        }
+        if (cleanName.length > 80 || cleanEmail.length > 254 || cleanPhone.length > 20 || cleanCity.length > 100 ||
+            cleanExperience.length > 1200 || cleanPuppyName.length > 80) {
+            return res.status(400).json({ error: "One or more answers are too long." });
+        }
+
+        const application = await AdoptionInterest.create({
+            name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            city: cleanCity,
+            homeType: cleanHomeType,
+            hasPets: cleanHasPets === "yes",
+            experience: cleanExperience,
+            puppyName: cleanPuppyName,
+            consentAt: new Date(),
+        });
+
+        transporter.sendMail({
+            from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
+            to: process.env.ADMIN_EMAIL,
+            subject: `New puppy adoption enquiry - ${application.name}`,
+            text: [
+                `New adoption enquiry from ${application.name}`,
+                `Email: ${application.email}`,
+                `Phone: ${application.phone}`,
+                `City / area: ${application.city}`,
+                `Home: ${application.homeType}`,
+                `Other pets: ${application.hasPets ? "Yes" : "No"}`,
+                `Puppy of interest: ${application.puppyName || "No preference"}`,
+                `Dog-care experience: ${application.experience}`,
+            ].join("\n"),
+        }).catch((err) => {
+            if (process.env.NODE_ENV !== "production") {
+                console.error("Adoption interest email notification failed:", err.message);
+            }
+        });
+
+        res.status(201).json({ ok: true, id: application._id });
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Adoption interest submission error:", err.message);
+        }
+        res.status(500).json({ error: "We couldn’t send your enquiry. Please try again." });
+    }
+});
+
+/* ==============================
    Admin Login
 ============================== */
 
@@ -458,6 +599,39 @@ app.patch("/api/admin/volunteers/:id", verifyAdmin, async(req, res) => {
             console.error("Update volunteer error:", err.message);
         }
         res.status(500).json({ error: "Update failed" });
+    }
+});
+
+app.get("/api/admin/adoption-interests", verifyAdmin, async(req, res) => {
+    try {
+        const data = await AdoptionInterest.find({ status: "pending" })
+            .sort({ createdAt: -1 })
+            .lean();
+        res.json(data);
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Fetch adoption interests error:", err.message);
+        }
+        res.status(500).json({ error: "Failed to fetch adoption enquiries" });
+    }
+});
+
+app.patch("/api/admin/adoption-interests/:id", verifyAdmin, async(req, res) => {
+    try {
+        if (req.body.status !== "contacted") {
+            return res.status(400).json({ error: "Invalid status" });
+        }
+
+        const updated = await AdoptionInterest.findByIdAndUpdate(
+            req.params.id, { status: "contacted" }, { new: true }
+        );
+        if (!updated) return res.status(404).json({ error: "Enquiry not found" });
+        res.json(updated);
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Update adoption interest error:", err.message);
+        }
+        res.status(500).json({ error: "Failed to update enquiry" });
     }
 });
 
