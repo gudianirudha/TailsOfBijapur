@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowRight, CalendarDays, Camera, Check, Download, LogOut, PawPrint, Plus, Trash2, Upload, X } from "lucide-react";
+import { ArrowRight, CalendarDays, Camera, Check, ClipboardList, Download, Heart, LogOut, MapPin, PawPrint, Plus, ShieldCheck, Trash2, Upload, Users, X } from "lucide-react";
 
 const EMPTY_PUPPY = {
   name: "",
@@ -184,6 +185,9 @@ export default function VolunteerPortal() {
     setMessage({ type: "", text: "" });
   }
 
+  const adoptedCount = puppies.filter((item) => item.status === "adopted").length;
+  const availableCount = puppies.length - adoptedCount;
+
   if (!token) {
     const settingPassword = mode === "setup";
     const requestingPasswordLink = mode === "forgot";
@@ -255,54 +259,87 @@ export default function VolunteerPortal() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f1ece2] px-4 py-10 text-stone-900 sm:px-6">
+    <main className="min-h-screen bg-[#f5f1e9] px-4 py-6 text-stone-900 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-800">Internal volunteer portal</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Puppy intake & adoption</h1>
-          </div>
-          <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-bold hover:border-orange-700 hover:text-orange-800">
+        <header className="relative mb-7 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#4a251b] via-[#702f1a] to-[#a3471e] px-6 py-8 text-white shadow-xl shadow-orange-950/10 sm:px-9 sm:py-10">
+          <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full border-[32px] border-white/5" />
+          <div className="relative flex flex-wrap items-end justify-between gap-5">
+            <div className="max-w-2xl">
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.17em] text-orange-100">
+                <PawPrint size={13} /> Volunteer workspace
+              </p>
+              <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Puppy intake & adoption</h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-orange-50/80 sm:text-base">Every record helps a rescued puppy find a safer, healthier next chapter.</p>
+            </div>
+            <button onClick={logout} className="relative inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/20">
             <LogOut size={16} /> Sign out
-          </button>
+            </button>
+          </div>
+          <div className="relative mt-7 grid max-w-lg grid-cols-3 gap-3">
+            {[
+              { label: "Puppies recorded", value: puppies.length, icon: PawPrint },
+              { label: "Available", value: availableCount, icon: Heart },
+              { label: "Adopted", value: adoptedCount, icon: Check },
+            ].map(({ label, value, icon: Icon }) => (
+              <div key={label} className="rounded-2xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
+                <div className="flex items-center gap-2 text-orange-100/80"><Icon size={15} /><span className="text-[10px] font-bold uppercase tracking-wider sm:text-[11px]">{label}</span></div>
+                <p className="mt-1 text-2xl font-black text-white">{value}</p>
+              </div>
+            ))}
+          </div>
         </header>
 
         {message.text && (
-          <p className={`mb-6 rounded-xl border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-green-200 bg-green-50 text-green-800"}`} role="status">{message.text}</p>
+          <p className={`mb-6 flex items-start gap-3 rounded-2xl border p-4 text-sm shadow-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`} role="status">
+            {message.type === "error" ? <X size={18} className="mt-0.5 shrink-0" /> : <Check size={18} className="mt-0.5 shrink-0" />}
+            {message.text}
+          </p>
         )}
 
-        <section className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="mb-6 flex items-center gap-3">
-            <span className="rounded-xl bg-orange-100 p-3 text-orange-800"><Camera size={21} /></span>
-            <div>
-              <h2 className="text-xl font-black">Register a puppy</h2>
-              <p className="text-sm text-stone-600">A unique tag number is assigned automatically after registration.</p>
+        <section className="overflow-hidden rounded-[1.75rem] border border-stone-200/80 bg-white shadow-[0_12px_40px_-28px_rgba(70,43,22,0.3)]">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 bg-gradient-to-r from-white to-orange-50/60 px-5 py-5 sm:px-8 sm:py-6">
+            <div className="flex items-center gap-3">
+              <span className="rounded-2xl bg-orange-100 p-3 text-orange-900"><Camera size={21} /></span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-800">New record</p>
+                <h2 className="mt-0.5 text-xl font-black sm:text-2xl">Register a puppy</h2>
+                <p className="mt-1 text-sm text-stone-600">A unique tag number is assigned after registration.</p>
+              </div>
             </div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-bold text-stone-600 ring-1 ring-stone-200"><ShieldCheck size={15} className="text-emerald-700" /> Secure volunteer record</span>
           </div>
-          <form onSubmit={submitPuppy} className="grid gap-5 md:grid-cols-2">
-            <Field label="Puppy name (if known)">
-              <input className={inputClass} maxLength={80} value={puppy.name} onChange={(event) => setPuppy({ ...puppy, name: event.target.value })} />
-            </Field>
-            <Field label="Age">
-              <input className={inputClass} placeholder="e.g. 8 weeks" maxLength={40} required value={puppy.age} onChange={(event) => setPuppy({ ...puppy, age: event.target.value })} />
-            </Field>
-            <Field label="Gender">
-              <select className={inputClass} required value={puppy.gender} onChange={(event) => setPuppy({ ...puppy, gender: event.target.value })}>
-                <option value="">Select</option><option value="female">Female</option><option value="male">Male</option><option value="unknown">Unknown</option>
-              </select>
-            </Field>
-            <div className="md:col-span-2">
-              <div className="mb-4">
-                <h3 className="text-sm font-black uppercase tracking-wider text-stone-700">Vaccination record</h3>
-                <p className="mt-1 text-sm text-stone-500">Add a date for each vaccine dose already given. You can leave either vaccine blank.</p>
+          <form onSubmit={submitPuppy} className="space-y-7 p-5 sm:p-8">
+            <section>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-black text-orange-900">1</span>
+                <div><h3 className="font-black text-stone-900">About the puppy</h3><p className="text-xs text-stone-500">Basic identification details</p></div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Field label="Puppy name (if known)">
+                  <input className={inputClass} maxLength={80} placeholder="Leave blank if unknown" value={puppy.name} onChange={(event) => setPuppy({ ...puppy, name: event.target.value })} />
+                </Field>
+                <Field label="Age">
+                  <input className={inputClass} placeholder="e.g. 8 weeks" maxLength={40} required value={puppy.age} onChange={(event) => setPuppy({ ...puppy, age: event.target.value })} />
+                </Field>
+                <Field label="Gender">
+                  <select className={inputClass} required value={puppy.gender} onChange={(event) => setPuppy({ ...puppy, gender: event.target.value })}>
+                    <option value="">Select gender</option><option value="female">Female</option><option value="male">Male</option><option value="unknown">Unknown</option>
+                  </select>
+                </Field>
+              </div>
+            </section>
+            <section className="border-t border-stone-100 pt-6">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-black text-emerald-900">2</span>
+                <div><h3 className="font-black text-stone-900">Vaccination record</h3><p className="text-xs text-stone-500">Add a date for each dose already given; both vaccine sections are optional.</p></div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 {[
                   { key: "dhppiVaccinations", title: "DHPPi", entryLabel: "Dose", addLabel: puppy.dhppiVaccinations.length ? "Add another DHPPi dose" : "Add DHPPi dose" },
                   { key: "antiRabiesVaccinations", title: "Anti-rabies", entryLabel: "Vaccination", addLabel: puppy.antiRabiesVaccinations.length ? "Add another anti-rabies entry" : "Add anti-rabies date" },
                 ].map(({ key, title, entryLabel, addLabel }) => (
-                  <div key={key} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                    <h4 className="font-bold text-stone-900">{title}</h4>
+                  <div key={key} className="rounded-2xl border border-stone-200 bg-[#faf9f6] p-4 sm:p-5">
+                    <h4 className="flex items-center gap-2 font-black text-stone-900"><span className="rounded-lg bg-white p-2 text-orange-800 shadow-sm"><ClipboardList size={16} /></span>{title}</h4>
                     <p className="mt-1 text-xs leading-5 text-stone-500">Select the date shown on the vaccination record.</p>
                     <div className="mt-4 space-y-3">
                       {puppy[key].map((date, index) => (
@@ -337,83 +374,100 @@ export default function VolunteerPortal() {
                   </div>
                 ))}
               </div>
+            </section>
+            <section className="border-t border-stone-100 pt-6">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sm font-black text-sky-900">3</span>
+                <div><h3 className="font-black text-stone-900">Foster & photo</h3><p className="text-xs text-stone-500">Add a contact name, location and one clear photo.</p></div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Name of the foster">
+                  <input className={inputClass} maxLength={100} required placeholder="Foster's full name" value={puppy.fosterName} onChange={(event) => setPuppy({ ...puppy, fosterName: event.target.value })} />
+                </Field>
+                <Field label="Location">
+                  <span className="relative block"><MapPin size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" /><input className={`${inputClass} pl-10`} maxLength={200} required placeholder="Area or neighbourhood" value={puppy.location} onChange={(event) => setPuppy({ ...puppy, location: event.target.value })} /></span>
+                </Field>
+                <Field label="Puppy photo · JPG or PNG, up to 5 MB">
+                  <span className="flex items-center gap-3 rounded-xl border border-dashed border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-600 transition hover:border-orange-500 hover:bg-orange-50/40">
+                    <Upload size={18} className="shrink-0 text-orange-800" />
+                    <input className="min-w-0 flex-1 text-xs" type="file" accept="image/jpeg,image/png" required onChange={(event) => setPhotos(Array.from(event.target.files || []).slice(0, 1))} />
+                  </span>
+                  {photos.length > 0 && <span className="text-xs font-semibold text-emerald-800">Photo ready: {photos[0].name}</span>}
+                </Field>
+              </div>
+            </section>
+            <div className="flex flex-col-reverse gap-3 border-t border-stone-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs leading-5 text-stone-500">Please check dates and details before saving.</p>
+              <button type="submit" disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-900 px-6 py-3.5 font-bold text-white shadow-lg shadow-orange-950/15 transition hover:-translate-y-0.5 hover:bg-orange-950 disabled:cursor-not-allowed disabled:opacity-60">
+                {busy ? "Registering puppy…" : <><PawPrint size={17} /> Register puppy</>}
+              </button>
             </div>
-            <Field label="Name of the foster">
-              <input className={inputClass} maxLength={100} required value={puppy.fosterName} onChange={(event) => setPuppy({ ...puppy, fosterName: event.target.value })} />
-            </Field>
-            <Field label="Location">
-              <input className={inputClass} maxLength={200} required value={puppy.location} onChange={(event) => setPuppy({ ...puppy, location: event.target.value })} />
-            </Field>
-            <Field label="Photo (1 max, JPG or PNG; max 5 MB)">
-              <span className="flex items-center gap-3 rounded-xl border border-dashed border-stone-400 bg-stone-50 px-4 py-3 text-sm text-stone-600">
-                <Upload size={18} />
-                <input className="min-w-0 flex-1 text-xs" type="file" accept="image/jpeg,image/png" required onChange={(event) => setPhotos(Array.from(event.target.files || []).slice(0, 1))} />
-              </span>
-              {photos.length > 0 && <span className="text-xs text-stone-500">1 photo selected</span>}
-            </Field>
-            <button type="submit" disabled={busy} className="md:col-span-2 rounded-xl bg-orange-800 px-5 py-3.5 font-bold text-white transition hover:bg-orange-900 disabled:opacity-60">
-              {busy ? "Registering puppy…" : "Register puppy"}
-            </button>
           </form>
         </section>
 
-        <section className="mt-10">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-black">Your puppy records</h2>
-            <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-stone-600">{puppies.length} total</span>
+        <section className="mt-12">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-800">Intake & adoption</p><h2 className="mt-1 text-2xl font-black sm:text-3xl">Your puppy records</h2><p className="mt-1 text-sm text-stone-600">Track each rescue from intake through adoption.</p></div>
+            <span className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm font-bold text-stone-600 shadow-sm">{puppies.length} {puppies.length === 1 ? "record" : "records"}</span>
           </div>
           {puppies.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stone-400 bg-white/60 p-10 text-center text-stone-600">No puppies registered yet.</div>
+            <div className="rounded-3xl border border-dashed border-stone-300 bg-white/75 px-6 py-12 text-center shadow-sm">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-orange-900"><PawPrint size={26} /></span>
+              <h3 className="mt-4 font-black text-stone-900">Your records will appear here</h3>
+              <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-stone-600">Register a puppy above to keep its details, vaccination history and adoption status together.</p>
+            </div>
           ) : (
             <div className="grid gap-5 lg:grid-cols-2">
               {puppies.map((item) => (
-                <article key={item._id} className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-                  {item.photos?.[0] && <img className="h-56 w-full object-cover" src={item.photos[0].url} alt={item.name || `Puppy ${item.tagNumber}`} />}
-                  <div className="space-y-4 p-5">
+                <article key={item._id} className="group overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-[0_12px_36px_-28px_rgba(70,43,22,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+                  <div className="relative h-52 overflow-hidden bg-stone-100 sm:h-60">
+                    {item.photos?.[0] ? <img className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" src={item.photos[0].url} alt={item.name || `Puppy ${item.tagNumber}`} /> : <div className="flex h-full items-center justify-center text-stone-300"><PawPrint size={42} /></div>}
+                    <span className={`absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black capitalize shadow-sm backdrop-blur ${item.status === "adopted" ? "bg-emerald-50/95 text-emerald-900" : "bg-white/95 text-sky-900"}`}>
+                      {item.status === "adopted" ? <Heart size={13} /> : <PawPrint size={13} />}{item.status}
+                    </span>
+                    <span className="absolute bottom-3 left-3 rounded-lg bg-stone-950/75 px-2.5 py-1.5 text-[11px] font-black tracking-wider text-white backdrop-blur">{item.tagNumber}</span>
+                  </div>
+                  <div className="space-y-4 p-5 sm:p-6">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div><p className="text-xs font-black uppercase tracking-widest text-orange-800">{item.tagNumber}</p><h3 className="mt-1 text-xl font-black">{item.name || "Unnamed puppy"}</h3></div>
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${item.status === "adopted" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}>{item.status}</span>
+                      <div><h3 className="text-2xl font-black tracking-tight text-stone-900">{item.name || "Unnamed puppy"}</h3><p className="mt-1 text-sm text-stone-500">{item.age} <span className="px-1 text-stone-300">·</span> <span className="capitalize">{item.gender}</span></p></div>
                     </div>
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-stone-600">
-                      <div><dt className="font-bold text-stone-800">Age</dt><dd>{item.age}</dd></div>
-                      <div><dt className="font-bold text-stone-800">Gender</dt><dd>{item.gender}</dd></div>
-                      <div className="col-span-2">
-                        <dt className="font-bold text-stone-800">DHPPi doses</dt>
+                    <dl className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl bg-stone-50 p-3"><dt className="font-bold text-stone-500">DHPPi</dt>
                         <dd>{item.dhppiVaccinations?.length
-                          ? item.dhppiVaccinations.map(formatVaccinationDate).join(", ")
+                          ? `${item.dhppiVaccinations.length} dose(s) · ${item.dhppiVaccinations.map(formatVaccinationDate).join(", ")}`
                           : item.dhppiDoseCount != null
                             ? `${item.dhppiDoseCount} dose(s) recorded; dates unavailable`
                             : "Not recorded"}</dd>
                       </div>
-                      <div className="col-span-2">
-                        <dt className="font-bold text-stone-800">Anti-rabies dates</dt>
+                      <div className="rounded-xl bg-stone-50 p-3"><dt className="font-bold text-stone-500">Anti-rabies</dt>
                         <dd>{item.antiRabiesVaccinations?.length
                           ? item.antiRabiesVaccinations.map(formatVaccinationDate).join(", ")
                           : item.antiRabiesDate || "Not recorded"}</dd>
                       </div>
-                      <div><dt className="font-bold text-stone-800">Foster</dt><dd>{item.fosterName || "Not recorded"}</dd></div>
-                      <div><dt className="font-bold text-stone-800">Location</dt><dd>{item.location || item.rescueLocation || "Not recorded"}</dd></div>
-                      {item.vaccination && <div className="col-span-2"><dt className="font-bold text-stone-800">Previous vaccination notes</dt><dd>{item.vaccination}</dd></div>}
+                      <div className="col-span-2 flex items-center gap-2 text-stone-600"><Users size={15} className="shrink-0 text-orange-800" /><span><strong className="text-stone-800">Foster:</strong> {item.fosterName || "Not recorded"}</span></div>
+                      <div className="col-span-2 flex items-center gap-2 text-stone-600"><MapPin size={15} className="shrink-0 text-orange-800" /><span><strong className="text-stone-800">Location:</strong> {item.location || item.rescueLocation || "Not recorded"}</span></div>
+                      {item.vaccination && <div className="col-span-2 rounded-xl border border-amber-100 bg-amber-50 p-3 text-stone-700"><dt className="font-bold text-amber-900">Previous vaccination notes</dt><dd className="mt-1">{item.vaccination}</dd></div>}
                     </dl>
                     {item.status === "adopted" ? (
-                      <div className="rounded-xl bg-green-50 p-4 text-sm leading-6 text-green-950">
-                        <p className="mb-1 flex items-center gap-2 font-bold"><Check size={16} /> Adopted by {item.adoption.name}</p>
-                        <p>{item.adoption.phone}</p><p>{item.adoption.address}</p>
-                        <p className="mt-1 text-xs text-green-800">{new Date(item.adoption.adoptedAt).toLocaleString()}</p>
+                      <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 text-sm leading-6 text-emerald-950">
+                        <p className="flex items-center gap-2 font-black"><Heart size={16} className="text-emerald-700" /> Adoption complete</p>
+                        <p className="mt-1">Adopted by <strong>{item.adoption.name}</strong></p>
+                        <p className="text-stone-600">{item.adoption.phone}</p><p className="text-stone-600">{item.adoption.address}</p>
+                        <p className="mt-1 text-xs text-emerald-800">{new Date(item.adoption.adoptedAt).toLocaleString()}</p>
                         <button
                           type="button"
                           onClick={() => setHealthCardPuppy(item)}
-                          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-800 px-4 py-3 font-bold text-white transition hover:bg-green-900"
+                          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 font-bold text-white shadow-sm transition hover:bg-emerald-900"
                         >
                           <Download size={17} /> View & download health card
                         </button>
                       </div>
                     ) : adoptingId === item._id ? (
-                      <form onSubmit={(event) => submitAdoption(event, item._id)} className="space-y-3 rounded-xl bg-stone-50 p-4">
-                        <p className="font-bold">Adopter details · {item.tagNumber}</p>
-                        <input className={inputClass} placeholder="Adopter full name" maxLength={100} required value={adopter.name} onChange={(event) => setAdopter({ ...adopter, name: event.target.value })} />
-                        <input className={inputClass} placeholder="Phone number" type="tel" inputMode="tel" maxLength={20} required value={adopter.phone} onChange={(event) => setAdopter({ ...adopter, phone: event.target.value })} />
-                        <textarea className={inputClass} placeholder="Full address" rows={3} maxLength={500} required value={adopter.address} onChange={(event) => setAdopter({ ...adopter, address: event.target.value })} />
+                      <form onSubmit={(event) => submitAdoption(event, item._id)} className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                        <p className="flex items-center gap-2 font-black text-stone-900"><Heart size={16} className="text-emerald-700" /> Record adoption</p>
+                        <input className={inputClass} placeholder="Adopter full name" aria-label="Adopter full name" maxLength={100} required value={adopter.name} onChange={(event) => setAdopter({ ...adopter, name: event.target.value })} />
+                        <input className={inputClass} placeholder="Phone number" aria-label="Phone number" type="tel" inputMode="tel" maxLength={20} required value={adopter.phone} onChange={(event) => setAdopter({ ...adopter, phone: event.target.value })} />
+                        <textarea className={inputClass} placeholder="Full address" aria-label="Full address" rows={3} maxLength={500} required value={adopter.address} onChange={(event) => setAdopter({ ...adopter, address: event.target.value })} />
                         <label className="flex items-start gap-3 text-sm leading-5 text-stone-600">
                           <input
                             type="checkbox"
@@ -424,13 +478,13 @@ export default function VolunteerPortal() {
                           <span>The adopter agrees to show their first name on the public adoption drive dashboard.</span>
                         </label>
                         <div className="flex gap-3">
-                          <button disabled={busy} className="flex-1 rounded-xl bg-green-800 px-4 py-3 text-sm font-bold text-white disabled:opacity-60">Confirm adoption</button>
-                          <button type="button" onClick={() => setAdoptingId("")} className="rounded-xl border border-stone-300 px-4 py-3 text-sm font-bold">Cancel</button>
+                          <button disabled={busy} className="flex-1 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-900 disabled:opacity-60">{busy ? "Saving…" : "Confirm adoption"}</button>
+                          <button type="button" onClick={() => setAdoptingId("")} className="rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm font-bold transition hover:bg-stone-100">Cancel</button>
                         </div>
                       </form>
                     ) : (
-                      <button onClick={() => setAdoptingId(item._id)} className="w-full rounded-xl border border-green-800/20 bg-green-50 px-4 py-3 text-sm font-bold text-green-900 hover:bg-green-100">
-                        Record adoption
+                      <button onClick={() => setAdoptingId(item._id)} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-800/15 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-900 transition hover:border-emerald-800/30 hover:bg-emerald-100">
+                        <Heart size={16} /> Record adoption
                       </button>
                     )}
                   </div>
@@ -440,7 +494,7 @@ export default function VolunteerPortal() {
           )}
         </section>
       </div>
-      {healthCardPuppy && (
+      {healthCardPuppy && createPortal(
         <div className="health-card-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-stone-950/70 p-4">
           <section
             id="puppy-health-card-print"
@@ -460,37 +514,37 @@ export default function VolunteerPortal() {
                 <X size={20} />
               </button>
             </div>
-            <div className="rounded-2xl border-2 border-orange-800/20 p-5 sm:p-7">
-              <header className="flex items-start justify-between gap-4 border-b border-stone-200 pb-5">
+            <div className="health-card-content overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+              <header className="flex items-center justify-between gap-4 bg-gradient-to-r from-[#4a251b] to-[#9a411e] px-5 py-5 text-white sm:px-7">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-800">Tails of Bijapur</p>
-                  <h1 id="health-card-title" className="mt-2 text-2xl font-black text-stone-900 sm:text-3xl">Puppy health card</h1>
-                  <p className="mt-1 text-sm text-stone-600">Vaccination record for the adopter</p>
+                  <p className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-orange-100"><PawPrint size={13} /> Tails of Bijapur</p>
+                  <h1 id="health-card-title" className="mt-1 text-2xl font-black sm:text-3xl">Puppy health card</h1>
+                  <p className="mt-1 text-xs text-orange-50/80 sm:text-sm">Adoption & vaccination record</p>
                 </div>
                 {healthCardPuppy.photos?.[0] && (
                   <img
-                    className="h-20 w-20 rounded-xl object-cover sm:h-28 sm:w-28"
+                    className="h-20 w-20 rounded-2xl border-2 border-white/50 object-cover shadow-md sm:h-24 sm:w-24"
                     src={healthCardPuppy.photos[0].url}
                     alt={healthCardPuppy.name || `Puppy ${healthCardPuppy.tagNumber}`}
                   />
                 )}
               </header>
-              <section className="border-b border-stone-200 py-5">
-                <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-stone-500">Puppy details</h3>
-                <dl className="grid grid-cols-2 gap-x-5 gap-y-3 text-sm">
-                  <div><dt className="font-bold text-stone-500">Name</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.name || "Unnamed puppy"}</dd></div>
-                  <div><dt className="font-bold text-stone-500">Tag number</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.tagNumber}</dd></div>
-                  <div><dt className="font-bold text-stone-500">Age</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.age || "Not recorded"}</dd></div>
-                  <div><dt className="font-bold text-stone-500">Gender</dt><dd className="mt-0.5 font-semibold capitalize text-stone-900">{healthCardPuppy.gender || "Not recorded"}</dd></div>
+              <section className="border-b border-stone-100 px-5 py-4 sm:px-7">
+                <h3 className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-orange-900"><PawPrint size={14} /> Puppy details</h3>
+                <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="rounded-xl bg-stone-50 px-3 py-2"><dt className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Name</dt><dd className="mt-0.5 text-sm font-bold text-stone-900">{healthCardPuppy.name || "Unnamed puppy"}</dd></div>
+                  <div className="rounded-xl bg-stone-50 px-3 py-2"><dt className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Tag number</dt><dd className="mt-0.5 text-sm font-bold text-stone-900">{healthCardPuppy.tagNumber}</dd></div>
+                  <div className="rounded-xl bg-stone-50 px-3 py-2"><dt className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Age</dt><dd className="mt-0.5 text-sm font-bold text-stone-900">{healthCardPuppy.age || "Not recorded"}</dd></div>
+                  <div className="rounded-xl bg-stone-50 px-3 py-2"><dt className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Gender</dt><dd className="mt-0.5 text-sm font-bold capitalize text-stone-900">{healthCardPuppy.gender || "Not recorded"}</dd></div>
                 </dl>
               </section>
-              <section className="border-b border-stone-200 py-5">
-                <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-stone-500">Vaccination history</h3>
+              <section className="border-b border-stone-100 px-5 py-4 sm:px-7">
+                <h3 className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-orange-900"><ClipboardList size={14} /> Vaccination history</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-xl bg-stone-50 p-4">
-                    <h4 className="font-bold text-stone-900">DHPPi</h4>
+                  <div className="rounded-xl border border-stone-100 bg-[#faf9f6] p-3">
+                    <h4 className="text-sm font-black text-stone-900">DHPPi</h4>
                     {healthCardPuppy.dhppiVaccinations?.length ? (
-                      <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-stone-700">
+                      <ol className="mt-1.5 list-inside list-decimal space-y-0.5 text-sm text-stone-700">
                         {healthCardPuppy.dhppiVaccinations.map((date, index) => <li key={`${date}-${index}`}>Dose {index + 1} · {formatVaccinationDate(date)}</li>)}
                       </ol>
                     ) : healthCardPuppy.dhppiDoseCount != null ? (
@@ -499,10 +553,10 @@ export default function VolunteerPortal() {
                       <p className="mt-2 text-sm text-stone-500">No doses recorded.</p>
                     )}
                   </div>
-                  <div className="rounded-xl bg-stone-50 p-4">
-                    <h4 className="font-bold text-stone-900">Anti-rabies</h4>
+                  <div className="rounded-xl border border-stone-100 bg-[#faf9f6] p-3">
+                    <h4 className="text-sm font-black text-stone-900">Anti-rabies</h4>
                     {healthCardPuppy.antiRabiesVaccinations?.length ? (
-                      <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-stone-700">
+                      <ol className="mt-1.5 list-inside list-decimal space-y-0.5 text-sm text-stone-700">
                         {healthCardPuppy.antiRabiesVaccinations.map((date, index) => <li key={`${date}-${index}`}>{formatVaccinationDate(date)}</li>)}
                       </ol>
                     ) : (
@@ -512,14 +566,14 @@ export default function VolunteerPortal() {
                 </div>
                 {healthCardPuppy.vaccination && <p className="mt-3 text-sm text-stone-600"><span className="font-bold">Previous vaccination notes:</span> {healthCardPuppy.vaccination}</p>}
               </section>
-              <section className="py-5">
-                <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-stone-500">Foster details</h3>
-                <dl className="grid grid-cols-2 gap-x-5 gap-y-3 text-sm">
-                  <div><dt className="font-bold text-stone-500">Foster name</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.fosterName || "Not recorded"}</dd></div>
-                  <div><dt className="font-bold text-stone-500">Location</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.location || healthCardPuppy.rescueLocation || "Not recorded"}</dd></div>
+              <section className="px-5 py-4 sm:px-7">
+                <h3 className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-orange-900"><Users size={14} /> Foster details</h3>
+                <dl className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-orange-50/70 px-3 py-2"><dt className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Foster name</dt><dd className="mt-0.5 text-sm font-bold text-stone-900">{healthCardPuppy.fosterName || "Not recorded"}</dd></div>
+                  <div className="rounded-xl bg-orange-50/70 px-3 py-2"><dt className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Location</dt><dd className="mt-0.5 text-sm font-bold text-stone-900">{healthCardPuppy.location || healthCardPuppy.rescueLocation || "Not recorded"}</dd></div>
                 </dl>
               </section>
-              <p className="border-t border-stone-200 pt-4 text-xs leading-5 text-stone-500">
+              <p className="border-t border-stone-100 bg-stone-50 px-5 py-3 text-[10px] leading-4 text-stone-500 sm:px-7">
                 This card reflects the vaccination information recorded at intake. Please consult a veterinarian to confirm the puppy’s ongoing vaccination and care schedule.
               </p>
             </div>
@@ -542,25 +596,52 @@ export default function VolunteerPortal() {
           </section>
           <style>{`
             @media print {
-              @page { size: A4; margin: 14mm; }
-              body * { visibility: hidden !important; }
-              #puppy-health-card-print, #puppy-health-card-print * { visibility: visible !important; }
+              @page { size: A4 portrait; margin: 10mm; }
+              body > *:not(.health-card-overlay) { display: none !important; }
+              .health-card-overlay,
+              .health-card-overlay * { visibility: visible !important; }
               #puppy-health-card-print {
-                position: fixed !important;
-                inset: 0 auto auto 0 !important;
-                width: 100% !important;
+                position: static !important;
+                display: block !important;
+                width: 190mm !important;
                 max-width: none !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 border-radius: 0 !important;
                 box-shadow: none !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
               }
               #puppy-health-card-print > div:nth-child(2) { border: 1px solid #d6d3d1 !important; }
-              .health-card-overlay { position: static !important; display: block !important; overflow: visible !important; background: white !important; padding: 0 !important; }
+              .health-card-content {
+                font-size: 9pt !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+              }
+              .health-card-content header { padding: 4mm 5mm !important; }
+              .health-card-content section { padding: 3mm 5mm !important; }
+              .health-card-content img { width: 23mm !important; height: 23mm !important; }
+              .health-card-content p { line-height: 1.3 !important; }
+              .health-card-content h1 { font-size: 20pt !important; }
+              .health-card-content h3 { margin-bottom: 2mm !important; }
+              .health-card-content ol { margin-top: 1mm !important; }
+              .health-card-content li, .health-card-content dd { font-size: 9pt !important; }
+              .health-card-overlay {
+                position: static !important;
+                display: block !important;
+                width: 190mm !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                background: white !important;
+                padding: 0 !important;
+              }
+              .health-card-overlay > section { margin: 0 !important; }
               .health-card-actions { display: none !important; }
             }
           `}</style>
-        </div>
+        </div>,
+        document.body
       )}
     </main>
   );
