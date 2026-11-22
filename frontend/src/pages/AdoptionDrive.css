@@ -7,9 +7,9 @@
 
 .drive-page {
   --drive-ink: #2d2723;
-  --drive-dark: #2c2522;
+  --drive-dark: #f1ece2;
   --drive-orange: #ef7c43;
-  --drive-paper: #f7f3e9;
+  --drive-paper: #f1ece2;
   color: var(--drive-ink);
   background: var(--drive-paper);
   font-family: "Lexend", ui-sans-serif, system-ui, sans-serif;
@@ -27,7 +27,7 @@
 
 .drive-hero {
   padding: 142px 0 0;
-  color: #fffaf0;
+  color: var(--drive-ink);
   background: var(--drive-dark);
   isolation: isolate;
 }
@@ -42,8 +42,8 @@
 
 .drive-hero::before {
   inset: 0;
-  opacity: 0.18;
-  background-image: radial-gradient(rgba(247, 243, 233, 0.45) 0.7px, transparent 0.7px);
+  opacity: 0.12;
+  background-image: radial-gradient(rgba(45, 39, 35, 0.35) 0.7px, transparent 0.7px);
   background-size: 19px 19px;
   mask-image: linear-gradient(110deg, #000 0%, transparent 58%);
 }
@@ -53,9 +53,9 @@
   right: -210px;
   width: 720px;
   height: 720px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(45, 39, 35, 0.08);
   border-radius: 50%;
-  box-shadow: 0 0 0 55px rgba(255, 255, 255, 0.025), 0 0 0 110px rgba(255, 255, 255, 0.02);
+  box-shadow: 0 0 0 55px rgba(45, 39, 35, 0.025), 0 0 0 110px rgba(45, 39, 35, 0.02);
 }
 
 .drive-hero__glow {
@@ -91,9 +91,9 @@
   align-items: center;
   gap: 10px;
   padding: 10px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(45, 39, 35, 0.2);
   border-radius: 999px;
-  color: rgba(255, 250, 240, 0.83);
+  color: rgba(45, 39, 35, 0.83);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.095em;
@@ -116,10 +116,11 @@
   font-weight: 550;
   letter-spacing: -0.085em;
   line-height: 0.98;
+  text-wrap: balance;
 }
 
 .drive-title__accent {
-  color: #f5a46f;
+  color: #a64c2b;
   font-size: 0.88em;
   line-height: 1.08;
 }
@@ -152,13 +153,19 @@
 
 .drive-text-link {
   min-height: 44px;
-  color: rgba(255, 250, 240, 0.78);
+  color: rgba(45, 39, 35, 0.78);
   font-size: 13px;
   font-weight: 500;
 }
 
 .drive-text-link:hover {
-  color: #f5a46f;
+  color: #a64c2b;
+}
+
+.drive-text-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #a64c2b;
+  outline-offset: 4px;
 }
 
 .drive-hero__visual {
@@ -313,14 +320,14 @@
 
 .drive-eventbar {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(250px, 1.25fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(230px, 0.8fr);
   align-items: center;
   margin-bottom: 12px;
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(45, 39, 35, 0.12);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: 0 20px 60px rgba(7, 23, 18, 0.16);
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 20px 60px rgba(45, 39, 35, 0.08);
 }
 
 .drive-eventbar__detail {
@@ -328,9 +335,11 @@
   align-items: center;
   gap: 11px;
   min-width: 0;
-  min-height: 62px;
-  padding: 0 16px;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  min-height: 78px;
+  padding: 14px;
+  border: 1px solid rgba(45, 39, 35, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.48);
 }
 
 .drive-eventbar__icon {
@@ -339,10 +348,10 @@
   height: 38px;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(45, 39, 35, 0.16);
   border-radius: 50%;
-  color: #f5a46f;
-  background: rgba(245, 164, 111, 0.08);
+  color: #a64c2b;
+  background: rgba(166, 76, 43, 0.08);
 }
 
 .drive-eventbar__copy {
@@ -362,8 +371,27 @@
 
 .drive-eventbar__copy small {
   margin-top: 4px;
-  color: rgba(255, 250, 240, 0.5);
+  color: rgba(45, 39, 35, 0.62);
   font-size: 11px;
+}
+
+.drive-eventbar__copy small a {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #8f4028;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.drive-eventbar__copy small a:hover {
+  color: #612b1d;
+}
+
+.drive-eventbar__copy small a:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid #8f4028;
+  outline-offset: 2px;
 }
 
 .drive-eventbar__countdown {
@@ -371,11 +399,12 @@
   flex-direction: column;
   gap: 11px;
   min-width: 0;
-  padding-left: 20px;
+  padding-left: 18px;
+  border-left: 1px solid rgba(45, 39, 35, 0.12);
 }
 
 .drive-countdown-label {
-  color: rgba(255, 250, 240, 0.5);
+  color: rgba(45, 39, 35, 0.62);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -397,7 +426,7 @@
 }
 
 .drive-countdown__value {
-  color: #fffaf0;
+  color: var(--drive-ink);
   font-size: clamp(20px, 2vw, 27px);
   font-weight: 600;
   letter-spacing: -0.05em;
@@ -405,7 +434,7 @@
 }
 
 .drive-countdown__label {
-  color: rgba(255, 250, 240, 0.5);
+  color: rgba(45, 39, 35, 0.62);
   font-size: 9px;
   text-transform: uppercase;
 }
@@ -482,8 +511,8 @@
 
 .drive-ready {
   padding: 100px 0 110px;
-  color: #f7f3e9;
-  background: #3a302b;
+  color: var(--drive-ink);
+  background: var(--drive-paper);
 }
 
 .drive-ready__grid {
@@ -494,7 +523,7 @@
 }
 
 .drive-ready .drive-eyebrow {
-  color: #f5a46f;
+  color: #a64c2b;
 }
 
 .drive-ready__intro {
@@ -513,20 +542,20 @@
 .drive-ready__intro h2 span {
   display: block;
   margin-top: 5px;
-  color: #f5a46f;
+  color: #a64c2b;
 }
 
 .drive-ready__intro > p:not(.drive-eyebrow) {
   max-width: 410px;
   margin-top: 22px;
-  color: rgba(247, 243, 233, 0.66);
+  color: rgba(45, 39, 35, 0.72);
   font-size: 14px;
   line-height: 1.8;
 }
 
 .drive-ready__link {
   margin-top: 30px;
-  color: #f5a46f;
+  color: #a64c2b;
   font-size: 13px;
   font-weight: 600;
 }
@@ -545,8 +574,8 @@
   display: flex;
   gap: 22px;
   padding: 22px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-  color: rgba(247, 243, 233, 0.82);
+  border-bottom: 1px solid rgba(45, 39, 35, 0.16);
+  color: rgba(45, 39, 35, 0.82);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -558,7 +587,7 @@
 .drive-checklist__number {
   flex: 0 0 auto;
   padding-top: 2px;
-  color: #f5a46f;
+  color: #a64c2b;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -566,8 +595,8 @@
 
 .drive-rsvp {
   padding: 108px 0;
-  color: #fffaf0;
-  background: #a64c2b;
+  color: var(--drive-ink);
+  background: var(--drive-paper);
 }
 
 .drive-rsvp__inner {
@@ -580,17 +609,21 @@
 }
 
 .drive-eyebrow--light {
-  color: #ffd1ad;
+  color: #a64c2b;
 }
 
 .drive-rsvp__intro h2 {
   max-width: 600px;
 }
 
+.drive-rsvp__intro h2 span {
+  color: #a64c2b;
+}
+
 .drive-attendance {
   margin-top: 40px;
   padding-top: 22px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(45, 39, 35, 0.2);
 }
 
 .drive-attendance__topline {
@@ -604,7 +637,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255, 250, 240, 0.9);
+  color: rgba(45, 39, 35, 0.9);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.11em;
@@ -621,7 +654,7 @@
 }
 
 .drive-live-badge--paused {
-  color: #ffd1ad;
+  color: #a64c2b;
 }
 
 .drive-live-badge--paused .drive-live-badge__dot {
@@ -631,7 +664,7 @@
 }
 
 .drive-attendance__updated {
-  color: rgba(255, 250, 240, 0.5);
+  color: rgba(45, 39, 35, 0.62);
   font-size: 10px;
   white-space: nowrap;
 }
@@ -648,12 +681,12 @@
   display: flex;
   align-items: baseline;
   gap: 10px;
-  color: rgba(255, 250, 240, 0.68);
+  color: rgba(45, 39, 35, 0.72);
   font-size: 13px;
 }
 
 .drive-attendance__totals strong {
-  color: #fffaf0;
+  color: var(--drive-ink);
   font-size: clamp(30px, 4vw, 42px);
   font-weight: 600;
   letter-spacing: -0.07em;
@@ -662,30 +695,30 @@
 
 .drive-attendance__groups {
   padding: 7px 10px;
-  border: 1px solid rgba(255, 250, 240, 0.16);
+  border: 1px solid rgba(45, 39, 35, 0.2);
   border-radius: 999px;
-  color: rgba(255, 250, 240, 0.72);
+  color: rgba(45, 39, 35, 0.72);
   font-size: 10px;
 }
 
 .drive-attendance__empty,
 .drive-attendance__error {
   margin-top: 14px;
-  color: rgba(255, 250, 240, 0.68);
+  color: rgba(45, 39, 35, 0.72);
   font-size: 12px;
 }
 
 .drive-attendance__error {
-  color: #ffd1ad;
+  color: #a64c2b;
 }
 
 .drive-rsvp__card {
   padding: clamp(24px, 4vw, 42px);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(45, 39, 35, 0.12);
   border-radius: 24px;
   color: var(--drive-ink);
-  background: #fffaf0;
-  box-shadow: 0 28px 70px rgba(68, 28, 12, 0.2);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 28px 70px rgba(45, 39, 35, 0.1);
 }
 
 .drive-label {
@@ -760,7 +793,7 @@
 
 .drive-interest {
   padding: 104px 0;
-  background: #f0e8d9;
+  background: var(--drive-paper);
 }
 
 .drive-interest__grid {
@@ -813,7 +846,7 @@
   position: relative;
   overflow: hidden;
   padding: 104px 0;
-  background: #f7f3e9;
+  background: var(--drive-paper);
 }
 
 .drive-proud::before {
@@ -969,7 +1002,7 @@
   padding: clamp(24px, 4vw, 42px);
   border: 1px solid #e8dece;
   border-radius: 24px;
-  background: #fffdf8;
+  background: rgba(255, 255, 255, 0.58);
   box-shadow: 0 18px 55px rgba(57, 42, 31, 0.08);
 }
 
@@ -1020,7 +1053,7 @@
 
 .drive-lastcall {
   padding: 52px 0;
-  background: #f1e9da;
+  background: var(--drive-paper);
 }
 
 .drive-lastcall__inner {
@@ -1058,21 +1091,14 @@
 
   .drive-eventbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    row-gap: 12px;
-  }
-
-  .drive-eventbar__detail:nth-child(2) {
-    border-right: 0;
-  }
-
-  .drive-eventbar__detail:nth-child(3) {
-    border-right: 0;
+    gap: 12px;
   }
 
   .drive-eventbar__countdown {
     grid-column: 1 / -1;
     padding: 14px 16px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(45, 39, 35, 0.12);
+    border-left: 0;
   }
 
   .drive-promises__grid {
@@ -1106,7 +1132,7 @@
 
   .drive-title {
     margin-top: 26px;
-    font-size: clamp(3.05rem, 12vw, 5rem);
+    font-size: clamp(2.4rem, 9.5vw, 4.2rem);
   }
 
   .drive-title__accent {
@@ -1154,24 +1180,16 @@
   }
 
   .drive-eventbar {
-    grid-template-columns: 1fr 1fr;
-    gap: 6px 0;
-    padding: 14px 8px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
     border-radius: 18px;
   }
 
   .drive-eventbar__detail {
     gap: 8px;
-    min-height: 56px;
-    padding: 0 8px;
-  }
-
-  .drive-eventbar__detail:nth-child(2) {
-    border-right: 0;
-  }
-
-  .drive-eventbar__detail:nth-child(3) {
-    border-right: 0;
+    min-height: 62px;
+    padding: 10px;
   }
 
   .drive-eventbar__icon {
@@ -1180,18 +1198,19 @@
   }
 
   .drive-eventbar__copy strong {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .drive-eventbar__copy small {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .drive-eventbar__countdown {
     grid-column: 1 / -1;
     gap: 10px;
     padding: 14px 8px 2px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(45, 39, 35, 0.12);
+    border-left: 0;
   }
 
   .drive-countdown {
