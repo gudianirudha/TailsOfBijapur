@@ -131,6 +131,9 @@ const volunteerAccountSchema = new mongoose.Schema({
 }, { timestamps: true });
 volunteerAccountSchema.index({ status: 1, createdAt: -1 });
 const VolunteerAccount = mongoose.model("VolunteerAccount", volunteerAccountSchema);
+const volunteerSuperAdminEmail = (process.env.VOLUNTEER_SUPER_ADMIN_EMAIL || "support@tailsofbijapur.org")
+    .trim()
+    .toLowerCase();
 
 const puppySchema = new mongoose.Schema({
     tagNumber: { type: String, required: true, unique: true },
@@ -798,9 +801,10 @@ async function verifyVolunteer(req, res, next) {
         if (payload.role !== "volunteer" || !mongoose.isValidObjectId(payload.volunteerId)) {
             return res.status(403).json({ error: "Volunteer access required" });
         }
-        const account = await VolunteerAccount.findOne({ _id: payload.volunteerId, status: "approved" }).select("_id");
+        const account = await VolunteerAccount.findOne({ _id: payload.volunteerId, status: "approved" }).select("_id email");
         if (!account) return res.status(403).json({ error: "Volunteer account is not active" });
         req.volunteerId = account._id;
+        req.isVolunteerSuperAdmin = account.email.toLowerCase() === volunteerSuperAdminEmail;
         next();
     } catch (err) {
         if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
@@ -1028,10 +1032,11 @@ app.patch("/api/admin/adoption-interests/:id", verifyAdmin, async(req, res) => {
 
 app.get("/api/volunteer-portal/puppies", verifyVolunteer, async(req, res) => {
     try {
-        const puppies = await Puppy.find({ volunteerId: req.volunteerId })
+        const query = req.isVolunteerSuperAdmin ? {} : { volunteerId: req.volunteerId };
+        const puppies = await Puppy.find(query)
             .sort({ createdAt: -1 })
             .lean();
-        res.json(puppies);
+        res.json({ puppies, isSuperAdmin: req.isVolunteerSuperAdmin });
     } catch (err) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Fetch volunteer puppy records error:", err.message);
@@ -1130,8 +1135,13 @@ app.patch("/api/volunteer-portal/puppies/:id/adoption", verifyVolunteer, async(r
             return res.status(400).json({ error: "Invalid puppy ID" });
         }
 
+        const adoptionQuery = {
+            _id: req.params.id,
+            status: "available",
+            ...(req.isVolunteerSuperAdmin ? {} : { volunteerId: req.volunteerId }),
+        };
         const puppy = await Puppy.findOneAndUpdate(
-            { _id: req.params.id, volunteerId: req.volunteerId, status: "available" },
+            adoptionQuery,
             {
                 status: "adopted",
                 adoption: {
