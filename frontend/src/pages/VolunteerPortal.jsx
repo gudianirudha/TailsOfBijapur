@@ -175,10 +175,10 @@ export default function VolunteerPortal() {
           <h1 className="text-3xl font-black tracking-tight">{title}</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
             {settingPassword
-              ? "Choose a password for your approved volunteer account. This setup link expires after 24 hours."
+              ? "Choose a new password for your volunteer account. This secure link expires after 24 hours."
               : requestingPasswordLink
-                ? "Enter the email you registered with. If your account is approved, we’ll send a password setup link."
-                : "Sign in to register puppies and keep their adoption records up to date. New volunteers should apply on the Volunteer page; approved applicants receive a password setup link by email."}
+                ? "Enter the email you registered with. If your account is approved, we’ll send a password reset link."
+                : "Sign in to register puppies and keep their adoption records up to date. New volunteers should apply on the Volunteer page and create a password there. Admin approval activates portal access."}
           </p>
           <form onSubmit={submitAccount} className="mt-7 space-y-4">
             {mode !== "setup" && (
@@ -188,19 +188,19 @@ export default function VolunteerPortal() {
             )}
             {(mode === "login" || settingPassword) && (
               <Field label={settingPassword ? "New password (12+ characters)" : "Password"}>
-                <input className={inputClass} type="password" autoComplete={settingPassword ? "new-password" : "current-password"} minLength={settingPassword ? 12 : undefined} maxLength={128} required value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} />
+                <input className={inputClass} type="password" autoComplete={settingPassword ? "new-password" : "current-password"} minLength={settingPassword ? 12 : undefined} maxLength={settingPassword ? 72 : 128} required value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} />
               </Field>
             )}
             {settingPassword && (
               <Field label="Confirm new password">
-                <input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={credentials.confirmPassword} onChange={(event) => setCredentials({ ...credentials, confirmPassword: event.target.value })} />
+                <input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={72} required value={credentials.confirmPassword} onChange={(event) => setCredentials({ ...credentials, confirmPassword: event.target.value })} />
               </Field>
             )}
             {message.text && (
               <p className={`rounded-xl p-3 text-sm ${message.type === "error" ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} role="status">{message.text}</p>
             )}
             <button type="submit" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-bold text-white transition hover:bg-orange-700 disabled:opacity-60">
-              {busy ? "Please wait…" : settingPassword ? "Set password" : requestingPasswordLink ? "Send setup link" : "Sign in"} <ArrowRight size={17} />
+              {busy ? "Please wait…" : settingPassword ? "Set password" : requestingPasswordLink ? "Send reset link" : "Sign in"} <ArrowRight size={17} />
             </button>
           </form>
           {!settingPassword && (
@@ -213,7 +213,7 @@ export default function VolunteerPortal() {
               {mode === "login" && (
                 <>
                   <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("forgot"); setMessage({ type: "", text: "" }); }}>
-                    Approved but need to set/reset your password?
+                    Forgot your password?
                   </button>
                   <Link to="/volunteer" className="text-orange-800 underline underline-offset-4">
                     New volunteer? Apply here

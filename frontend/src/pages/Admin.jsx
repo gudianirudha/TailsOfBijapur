@@ -350,7 +350,7 @@ export default function Admin() {
             </div>
             <div>
               <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Volunteer Applications</h2>
-              <p className="mt-2 text-sm text-gray-500">Approve an application to email the volunteer a secure link to set their portal password.</p>
+              <p className="mt-2 text-sm text-gray-500">Applicants create a password when they apply. Approval activates their portal account.</p>
             </div>
           </div>
 
@@ -388,7 +388,7 @@ export default function Admin() {
                   {/* Action Buttons */}
                   <div className="flex sm:flex-col gap-3 w-full sm:w-auto shrink-0">
                     <button onClick={() => updateVolunteer(item._id, "approved")} className="flex-1 flex items-center justify-center gap-2 bg-green-500/10 hover:bg-green-500 text-green-500 hover:text-white border border-green-500/20 px-6 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
-                      <Check size={16} /> Approve &amp; Email Setup Link
+                      <Check size={16} /> Approve &amp; Activate Portal
                     </button>
                     <button onClick={() => updateVolunteer(item._id, "rejected")} className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 px-6 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
                       <X size={16} /> Deny

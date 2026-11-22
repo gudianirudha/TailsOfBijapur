@@ -10,6 +10,8 @@ export default function Volunteer() {
     role: "student",
     time: "weekends",
     why: "",
+    password: "",
+    confirmPassword: "",
   });
   
   const [status, setStatus] = useState("idle"); 
@@ -20,17 +22,23 @@ export default function Volunteer() {
     setStatus("submitting");
     
     try {
+      if (form.password !== form.confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
+
+      const application = { ...form };
+      delete application.confirmPassword;
       const res = await fetch("/api/volunteer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(application),
       });
       
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not submit your application. Please try again.");
       setStatus("success");
-      setMsg("Application submitted. If approved, you’ll receive an email with a secure link to set your volunteer portal password.");
-      setForm({ name: "", email: "", phone: "", role: "student", time: "weekends", why: "" });
+      setMsg("Application submitted. Your portal account will be activated after admin approval. Sign in with the password you created here.");
+      setForm({ name: "", email: "", phone: "", role: "student", time: "weekends", why: "", password: "", confirmPassword: "" });
     } catch (err) {
       setStatus("error");
       setMsg(err.message || "Network error. Please try again.");
@@ -121,6 +129,17 @@ export default function Volunteer() {
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Email Address</label>
                   <input required type="email" maxLength={254} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="jane@example.com" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Create Password (12+ characters)</label>
+                    <input required type="password" autoComplete="new-password" minLength={12} maxLength={72} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Confirm Password</label>
+                    <input required type="password" autoComplete="new-password" minLength={12} maxLength={72} value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
