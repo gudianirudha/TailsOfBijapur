@@ -15,6 +15,7 @@ const cloudinary = require("./config/cloudinary");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+app.set("trust proxy", process.env.VERCEL === "1" ? 1 : false);
 
 /* ==============================
    Middleware
@@ -34,7 +35,10 @@ app.use(express.json());
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
 });
 
 /* ==============================
@@ -375,8 +379,20 @@ app.post("/api/volunteer", async(req, res) => {
    Adoption Drive RSVPs
 ============================== */
 
-const driveLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
-const adoptionInterestLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+const driveLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
+});
+const adoptionInterestLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
+});
 
 app.post("/api/drive/rsvp", driveLimiter, async(req, res) => {
     try {
@@ -496,7 +512,13 @@ app.post("/api/drive/adoption-interest", adoptionInterestLimiter, async(req, res
    Volunteer Portal Accounts
 ============================== */
 
-const volunteerAccountLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+const volunteerAccountLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
+});
 
 function hashPasswordSetupToken(token) {
     return createHash("sha256").update(token).digest("hex");
