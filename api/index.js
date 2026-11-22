@@ -662,7 +662,37 @@ app.post("/api/volunteer-portal/login", volunteerAccountLimiter, async(req, res)
             return res.status(400).json({ error: "Email and password are required" });
         }
 
-        const account = await VolunteerAccount.findOne({ email }).select("+passwordHash");
+        let account = await VolunteerAccount.findOne({ email }).select("+passwordHash");
+        if (!account) {
+            const application = await Volunteer.findOne({ email, status: "approved" }).select("+passwordHash");
+            if (application?.passwordHash) {
+                try {
+                    account = await VolunteerAccount.findOneAndUpdate(
+                        { email },
+                        {
+                            $setOnInsert: {
+                                _id: application._id,
+                                name: application.name,
+                                email: application.email,
+                                phone: application.phone,
+                                passwordHash: application.passwordHash,
+                                status: "approved",
+                            },
+                        },
+                        { new: true, upsert: true, setDefaultsOnInsert: true }
+                    ).select("+passwordHash");
+                } catch (provisionError) {
+                    if (provisionError.code !== 11000) throw provisionError;
+                    account = await VolunteerAccount.findOne({ email }).select("+passwordHash");
+                    if (!account) throw provisionError;
+                }
+
+                await Volunteer.updateOne(
+                    { _id: application._id },
+                    { $unset: { passwordHash: 1 } }
+                );
+            }
+        }
         if (!account) {
             return res.status(401).json({ error: "Invalid email or password" });
         }
