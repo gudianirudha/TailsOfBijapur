@@ -140,6 +140,8 @@ const puppySchema = new mongoose.Schema({
     vaccination: { type: String, maxlength: 500 },
     dhppiDoseCount: { type: Number, min: 0, validate: Number.isInteger },
     antiRabiesDate: { type: String, match: /^\d{4}-\d{2}-\d{2}$/ },
+    dhppiVaccinations: [{ type: String, match: /^\d{4}-\d{2}-\d{2}$/ }],
+    antiRabiesVaccinations: [{ type: String, match: /^\d{4}-\d{2}-\d{2}$/ }],
     fosterName: { type: String, maxlength: 100, default: "" },
     location: { type: String, maxlength: 200, default: "" },
     photos: [{ url: { type: String, required: true }, publicId: { type: String, required: true } }],
@@ -1045,9 +1047,36 @@ app.post("/api/volunteer-portal/puppies", verifyVolunteer, puppyPhotosUpload, as
         const gender = req.body.gender;
         const fosterName = sanitizeInput(req.body.fosterName);
         const location = sanitizeInput(req.body.location);
-        const dhppiDoseCountInput = req.body.dhppiDoseCount;
-        const antiRabiesDate = sanitizeInput(req.body.antiRabiesDate);
         const photos = (req.files || []).map((file) => ({ url: file.path, publicId: file.filename }));
+
+        const parseVaccinations = (input, label) => {
+            let dates;
+            try {
+                dates = JSON.parse(input || "[]");
+            } catch {
+                throw new Error(`${label} entries must be valid`);
+            }
+            if (!Array.isArray(dates) || dates.some((date) => typeof date !== "string" || !date)) {
+                throw new Error(`${label} entries must each have a date`);
+            }
+            for (const date of dates) {
+                const parsedDate = new Date(`${date}T00:00:00.000Z`);
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+                    Number.isNaN(parsedDate.getTime()) ||
+                    parsedDate.toISOString().slice(0, 10) !== date) {
+                    throw new Error(`Enter a valid date for each ${label} entry`);
+                }
+            }
+            return dates;
+        };
+        let dhppiVaccinations;
+        let antiRabiesVaccinations;
+        try {
+            dhppiVaccinations = parseVaccinations(req.body.dhppiVaccinations, "DHPPi");
+            antiRabiesVaccinations = parseVaccinations(req.body.antiRabiesVaccinations, "anti-rabies");
+        } catch (validationError) {
+            return res.status(400).json({ error: validationError.message });
+        }
 
         if (!age || !fosterName || !location || !["female", "male", "unknown"].includes(gender)) {
             return res.status(400).json({ error: "Age, gender, foster name, and location are required" });
@@ -1056,23 +1085,6 @@ app.post("/api/volunteer-portal/puppies", verifyVolunteer, puppyPhotosUpload, as
         if (photos.length > 1) return res.status(400).json({ error: "Upload no more than one puppy photo" });
         if (name.length > 80 || age.length > 40 || fosterName.length > 100 || location.length > 200) {
             return res.status(400).json({ error: "One or more puppy details are too long" });
-        }
-
-        let dhppiDoseCount;
-        if (dhppiDoseCountInput !== undefined && dhppiDoseCountInput !== "") {
-            const doseCountInput = String(dhppiDoseCountInput);
-            if (!/^\d+$/.test(doseCountInput)) {
-                return res.status(400).json({ error: "DHPPi dose count must be a non-negative whole number" });
-            }
-            dhppiDoseCount = Number(doseCountInput);
-        }
-        if (antiRabiesDate) {
-            const parsedDate = new Date(`${antiRabiesDate}T00:00:00.000Z`);
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(antiRabiesDate) ||
-                Number.isNaN(parsedDate.getTime()) ||
-                parsedDate.toISOString().slice(0, 10) !== antiRabiesDate) {
-                return res.status(400).json({ error: "Enter a valid anti-rabies vaccination date" });
-            }
         }
 
         const year = new Date().getFullYear();
@@ -1087,8 +1099,8 @@ app.post("/api/volunteer-portal/puppies", verifyVolunteer, puppyPhotosUpload, as
             name,
             age,
             gender,
-            dhppiDoseCount,
-            antiRabiesDate,
+            dhppiVaccinations,
+            antiRabiesVaccinations,
             fosterName: fosterName.slice(0, 100),
             location: location.slice(0, 200),
             photos,

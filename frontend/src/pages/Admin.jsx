@@ -2,6 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Check, X, PawPrint, Users, ShieldAlert, Phone, Mail } from "lucide-react";
 
+function formatVaccinationDate(date) {
+  if (!date) return "";
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 export default function Admin() {
   const [adoptions, setAdoptions] = useState([]);
   const [adoptionInterests, setAdoptionInterests] = useState([]);
@@ -424,8 +430,14 @@ export default function Admin() {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-400">
                       <p><span className="font-bold text-gray-300">Age:</span> {item.age}</p>
                       <p><span className="font-bold text-gray-300">Gender:</span> {item.gender}</p>
-                      <p><span className="font-bold text-gray-300">DHPPi doses:</span> {item.dhppiDoseCount ?? "Not recorded"}</p>
-                      <p><span className="font-bold text-gray-300">Anti-rabies date:</span> {item.antiRabiesDate || "Not recorded"}</p>
+                      <p className="col-span-2"><span className="font-bold text-gray-300">DHPPi doses:</span> {item.dhppiVaccinations?.length
+                        ? item.dhppiVaccinations.map(formatVaccinationDate).join(", ")
+                        : item.dhppiDoseCount != null
+                          ? `${item.dhppiDoseCount} dose(s) recorded; dates unavailable`
+                          : "Not recorded"}</p>
+                      <p className="col-span-2"><span className="font-bold text-gray-300">Anti-rabies dates:</span> {item.antiRabiesVaccinations?.length
+                        ? item.antiRabiesVaccinations.map(formatVaccinationDate).join(", ")
+                        : item.antiRabiesDate || "Not recorded"}</p>
                       <p><span className="font-bold text-gray-300">Foster:</span> {item.fosterName || "Not recorded"}</p>
                       <p><span className="font-bold text-gray-300">Location:</span> {item.location || item.rescueLocation || "Not recorded"}</p>
                       {item.vaccination && <p className="col-span-2"><span className="font-bold text-gray-300">Previous vaccination notes:</span> {item.vaccination}</p>}

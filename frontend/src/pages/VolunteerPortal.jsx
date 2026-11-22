@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowRight, Camera, Check, LogOut, PawPrint, Upload } from "lucide-react";
+import { ArrowRight, CalendarDays, Camera, Check, LogOut, PawPrint, Plus, Trash2, Upload } from "lucide-react";
 
 const EMPTY_PUPPY = {
   name: "",
   age: "",
   gender: "",
-  dhppiDoseCount: "",
-  antiRabiesDate: "",
+  dhppiVaccinations: [],
+  antiRabiesVaccinations: [],
   fosterName: "",
   location: "",
 };
@@ -23,6 +23,12 @@ function Field({ label, children }) {
 
 const inputClass = "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-orange-600 focus:ring-2 focus:ring-orange-600/15";
 
+function formatVaccinationDate(date) {
+  if (!date) return "";
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 export default function VolunteerPortal() {
   const [searchParams, setSearchParams] = useSearchParams();
   const setupToken = searchParams.get("setupToken") || "";
@@ -36,6 +42,24 @@ export default function VolunteerPortal() {
   const [adoptingId, setAdoptingId] = useState("");
   const [adopter, setAdopter] = useState({ name: "", phone: "", address: "", publicNameConsent: false });
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  function addVaccination(key) {
+    setPuppy((current) => ({ ...current, [key]: [...current[key], ""] }));
+  }
+
+  function updateVaccination(key, index, date) {
+    setPuppy((current) => ({
+      ...current,
+      [key]: current[key].map((currentDate, currentIndex) => currentIndex === index ? date : currentDate),
+    }));
+  }
+
+  function removeVaccination(key, index) {
+    setPuppy((current) => ({
+      ...current,
+      [key]: current[key].filter((_, currentIndex) => currentIndex !== index),
+    }));
+  }
 
   const loadPuppies = useCallback(async (authToken) => {
     const response = await fetch("/api/volunteer-portal/puppies", {
@@ -106,7 +130,9 @@ export default function VolunteerPortal() {
     setMessage({ type: "", text: "" });
     try {
       const formData = new FormData();
-      Object.entries(puppy).forEach(([key, value]) => formData.append(key, value));
+      Object.entries(puppy).forEach(([key, value]) => {
+        formData.append(key, Array.isArray(value) ? JSON.stringify(value) : value);
+      });
       photos.forEach((photo) => formData.append("photos", photo));
       const response = await fetch("/api/volunteer-portal/puppies", {
         method: "POST",
@@ -265,14 +291,50 @@ export default function VolunteerPortal() {
               </select>
             </Field>
             <div className="md:col-span-2">
-              <h3 className="mb-3 text-sm font-black uppercase tracking-wider text-stone-700">Vaccination details</h3>
-              <div className="grid gap-5 md:grid-cols-2">
-                <Field label="DHPPi number of doses">
-                  <input className={inputClass} type="number" min="0" step="1" inputMode="numeric" value={puppy.dhppiDoseCount} onChange={(event) => setPuppy({ ...puppy, dhppiDoseCount: event.target.value })} />
-                </Field>
-                <Field label="Anti-rabies vaccination date">
-                  <input className={inputClass} type="date" value={puppy.antiRabiesDate} onChange={(event) => setPuppy({ ...puppy, antiRabiesDate: event.target.value })} />
-                </Field>
+              <div className="mb-4">
+                <h3 className="text-sm font-black uppercase tracking-wider text-stone-700">Vaccination record</h3>
+                <p className="mt-1 text-sm text-stone-500">Add a date for each vaccine dose already given. You can leave either vaccine blank.</p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {[
+                  { key: "dhppiVaccinations", title: "DHPPi", entryLabel: "Dose", addLabel: puppy.dhppiVaccinations.length ? "Add another DHPPi dose" : "Add DHPPi dose" },
+                  { key: "antiRabiesVaccinations", title: "Anti-rabies", entryLabel: "Vaccination", addLabel: puppy.antiRabiesVaccinations.length ? "Add another anti-rabies entry" : "Add anti-rabies date" },
+                ].map(({ key, title, entryLabel, addLabel }) => (
+                  <div key={key} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                    <h4 className="font-bold text-stone-900">{title}</h4>
+                    <p className="mt-1 text-xs leading-5 text-stone-500">Select the date shown on the vaccination record.</p>
+                    <div className="mt-4 space-y-3">
+                      {puppy[key].map((date, index) => (
+                        <div key={`${key}-${index}`} className="flex items-end gap-2">
+                          <Field label={`${entryLabel} ${index + 1} date`}>
+                            <span className="relative block">
+                              <CalendarDays size={17} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
+                              <input className={`${inputClass} pl-10`} type="date" required value={date} onChange={(event) => updateVaccination(key, index, event.target.value)} />
+                            </span>
+                          </Field>
+                          <button
+                            type="button"
+                            onClick={() => removeVaccination(key, index)}
+                            aria-label={`Remove ${title} ${entryLabel.toLowerCase()} ${index + 1}`}
+                            className="mb-0.5 rounded-xl border border-stone-300 p-3 text-stone-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      ))}
+                      {puppy[key].length === 0 && (
+                        <p className="rounded-xl border border-dashed border-stone-300 bg-white px-3 py-3 text-sm text-stone-500">No {title} doses recorded yet.</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addVaccination(key)}
+                      className="mt-4 inline-flex items-center gap-2 rounded-xl border border-orange-800/20 bg-white px-3 py-2.5 text-sm font-bold text-orange-900 transition hover:bg-orange-50"
+                    >
+                      <Plus size={17} /> {addLabel}
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
             <Field label="Name of the foster">
@@ -314,8 +376,20 @@ export default function VolunteerPortal() {
                     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-stone-600">
                       <div><dt className="font-bold text-stone-800">Age</dt><dd>{item.age}</dd></div>
                       <div><dt className="font-bold text-stone-800">Gender</dt><dd>{item.gender}</dd></div>
-                      <div><dt className="font-bold text-stone-800">DHPPi doses</dt><dd>{item.dhppiDoseCount ?? "Not recorded"}</dd></div>
-                      <div><dt className="font-bold text-stone-800">Anti-rabies date</dt><dd>{item.antiRabiesDate || "Not recorded"}</dd></div>
+                      <div className="col-span-2">
+                        <dt className="font-bold text-stone-800">DHPPi doses</dt>
+                        <dd>{item.dhppiVaccinations?.length
+                          ? item.dhppiVaccinations.map(formatVaccinationDate).join(", ")
+                          : item.dhppiDoseCount != null
+                            ? `${item.dhppiDoseCount} dose(s) recorded; dates unavailable`
+                            : "Not recorded"}</dd>
+                      </div>
+                      <div className="col-span-2">
+                        <dt className="font-bold text-stone-800">Anti-rabies dates</dt>
+                        <dd>{item.antiRabiesVaccinations?.length
+                          ? item.antiRabiesVaccinations.map(formatVaccinationDate).join(", ")
+                          : item.antiRabiesDate || "Not recorded"}</dd>
+                      </div>
                       <div><dt className="font-bold text-stone-800">Foster</dt><dd>{item.fosterName || "Not recorded"}</dd></div>
                       <div><dt className="font-bold text-stone-800">Location</dt><dd>{item.location || item.rescueLocation || "Not recorded"}</dd></div>
                       {item.vaccination && <div className="col-span-2"><dt className="font-bold text-stone-800">Previous vaccination notes</dt><dd>{item.vaccination}</dd></div>}
