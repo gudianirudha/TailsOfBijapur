@@ -85,7 +85,7 @@ export default function VolunteerPortal() {
       if (!response.ok) throw new Error(data.error || "Could not complete the request.");
       if (registering) {
         setMode("login");
-        setMessage({ type: "success", text: data.message });
+        setMessage({ type: data.notificationSent === false ? "warning" : "success", text: data.message });
       } else if (mode === "forgot") {
         setMessage({ type: "success", text: data.message });
       } else if (mode === "setup") {
@@ -217,7 +217,7 @@ export default function VolunteerPortal() {
               </Field>
             )}
             {message.text && (
-              <p className={`rounded-xl p-3 text-sm ${message.type === "error" ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} role="status">{message.text}</p>
+              <p className={`rounded-xl p-3 text-sm ${message.type === "error" ? "bg-red-50 text-red-800" : message.type === "warning" ? "bg-amber-50 text-amber-900" : "bg-green-50 text-green-800"}`} role="status">{message.text}</p>
             )}
             <button type="submit" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-bold text-white transition hover:bg-orange-700 disabled:opacity-60">
               {busy ? "Please wait…" : registering ? "Request access" : settingPassword ? "Set password" : requestingPasswordLink ? "Send setup link" : "Sign in"} <ArrowRight size={17} />

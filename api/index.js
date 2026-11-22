@@ -528,6 +528,26 @@ async function sendVolunteerPasswordSetupEmail(req, account, token) {
     });
 }
 
+async function sendVolunteerAccessRequestEmail(req, account) {
+    const adminUrl = `${getFrontendBaseUrl(req)}/admin`;
+    await transporter.sendMail({
+        from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
+        to: process.env.ADMIN_EMAIL,
+        subject: `New volunteer portal access request - ${account.name}`,
+        text: [
+            "A volunteer has requested access to the puppy intake portal.",
+            "",
+            `Name: ${account.name}`,
+            `Email: ${account.email}`,
+            `Phone: ${account.phone}`,
+            `Status: ${account.status}`,
+            "",
+            `Review this request in the admin portal: ${adminUrl}`,
+        ].join("\n"),
+        html: `<p>A volunteer has requested access to the puppy intake portal.</p><ul><li><strong>Name:</strong> ${escapeHtml(account.name)}</li><li><strong>Email:</strong> ${escapeHtml(account.email)}</li><li><strong>Phone:</strong> ${escapeHtml(account.phone)}</li><li><strong>Status:</strong> ${escapeHtml(account.status)}</li></ul><p><a href="${adminUrl}">Review this request in the admin portal</a></p>`,
+    });
+}
+
 app.post("/api/volunteer-portal/register", volunteerAccountLimiter, async(req, res) => {
     try {
         const name = sanitizeInput(req.body.name);
@@ -540,8 +560,27 @@ app.post("/api/volunteer-portal/register", volunteerAccountLimiter, async(req, r
         if (!isValidEmail(email)) return res.status(400).json({ error: "Invalid email format" });
         if (!isValidPhone(phone)) return res.status(400).json({ error: "Invalid phone format" });
 
-        await VolunteerAccount.create({ name: name.slice(0, 80), email, phone: phone.slice(0, 20) });
-        res.status(201).json({ ok: true, message: "Access request submitted. Once an admin approves you, we’ll email a link to set your password." });
+        const account = await VolunteerAccount.create({
+            name: name.slice(0, 80),
+            email,
+            phone: phone.slice(0, 20),
+        });
+        let notificationSent = true;
+        try {
+            await sendVolunteerAccessRequestEmail(req, account);
+        } catch (emailError) {
+            notificationSent = false;
+            if (process.env.NODE_ENV !== "production") {
+                console.error("Volunteer portal request notification failed:", emailError.message);
+            }
+        }
+        res.status(201).json({
+            ok: true,
+            notificationSent,
+            message: notificationSent
+                ? "Access request submitted and the admin has been notified. Once approved, you’ll receive an email link to set your password."
+                : "Access request is saved, but the admin notification email could not be sent. Please contact the admin; your request is still visible under Portal access requests.",
+        });
     } catch (err) {
         if (err.code === 11000) return res.status(409).json({ error: "An account with this email already exists" });
         if (process.env.NODE_ENV !== "production") {
