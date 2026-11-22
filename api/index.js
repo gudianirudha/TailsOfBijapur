@@ -9,6 +9,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const bcryptjs = require("bcryptjs");
+const { createHash, randomBytes } = require("crypto");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("./config/cloudinary");
 
@@ -118,7 +119,9 @@ const volunteerAccountSchema = new mongoose.Schema({
     name: { type: String, required: true, maxlength: 80, trim: true },
     email: { type: String, required: true, maxlength: 254, lowercase: true, trim: true, unique: true },
     phone: { type: String, required: true, maxlength: 20, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    passwordHash: { type: String, select: false },
+    passwordSetupTokenHash: { type: String, select: false },
+    passwordSetupExpiresAt: { type: Date, select: false },
     status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending", index: true },
 }, { timestamps: true });
 volunteerAccountSchema.index({ status: 1, createdAt: -1 });
@@ -488,31 +491,138 @@ app.post("/api/drive/adoption-interest", adoptionInterestLimiter, async(req, res
 
 const volunteerAccountLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 
+function hashPasswordSetupToken(token) {
+    return createHash("sha256").update(token).digest("hex");
+}
+
+function getFrontendBaseUrl(req) {
+    const configuredUrl = process.env.FRONTEND_URL?.split(",")[0].trim();
+    return (configuredUrl || req.get("origin") || "http://localhost:5173").replace(/\/+$/, "");
+}
+
+function escapeHtml(value) {
+    return value.replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+    })[character]);
+}
+
+async function sendVolunteerPasswordSetupEmail(req, account, token) {
+    const setupUrl = `${getFrontendBaseUrl(req)}/volunteer-portal?setupToken=${encodeURIComponent(token)}`;
+    await transporter.sendMail({
+        from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
+        to: account.email,
+        subject: "Set up your Tails of Bijapur volunteer portal password",
+        text: [
+            `Hello ${account.name},`,
+            "",
+            "Your volunteer portal access is approved. Set your password using this one-time link:",
+            setupUrl,
+            "",
+            "This link expires in 24 hours. If you did not request this, you can ignore this email.",
+        ].join("\n"),
+        html: `<p>Hello ${escapeHtml(account.name)},</p><p>Your volunteer portal access is approved. Set your password using the one-time link below. It expires in 24 hours.</p><p><a href="${setupUrl}">Set your volunteer portal password</a></p><p>If you did not request this, you can ignore this email.</p>`,
+    });
+}
+
 app.post("/api/volunteer-portal/register", volunteerAccountLimiter, async(req, res) => {
     try {
         const name = sanitizeInput(req.body.name);
         const email = sanitizeInput(req.body.email).toLowerCase();
         const phone = sanitizeInput(req.body.phone);
-        const password = req.body.password;
 
-        if (!name || !email || !phone || !password) {
-            return res.status(400).json({ error: "Name, email, phone, and password are required" });
+        if (!name || !email || !phone) {
+            return res.status(400).json({ error: "Name, email, and phone are required" });
         }
         if (!isValidEmail(email)) return res.status(400).json({ error: "Invalid email format" });
         if (!isValidPhone(phone)) return res.status(400).json({ error: "Invalid phone format" });
-        if (typeof password !== "string" || password.length < 12 || password.length > 128) {
-            return res.status(400).json({ error: "Password must be between 12 and 128 characters" });
-        }
 
-        const passwordHash = await bcryptjs.hash(password, 12);
-        await VolunteerAccount.create({ name: name.slice(0, 80), email, phone: phone.slice(0, 20), passwordHash });
-        res.status(201).json({ ok: true, message: "Registration submitted. An admin must approve your account before you can sign in." });
+        await VolunteerAccount.create({ name: name.slice(0, 80), email, phone: phone.slice(0, 20) });
+        res.status(201).json({ ok: true, message: "Access request submitted. Once an admin approves you, we’ll email a link to set your password." });
     } catch (err) {
         if (err.code === 11000) return res.status(409).json({ error: "An account with this email already exists" });
         if (process.env.NODE_ENV !== "production") {
             console.error("Volunteer account registration error:", err.message);
         }
         res.status(500).json({ error: "Registration failed. Please try again." });
+    }
+});
+
+app.post("/api/volunteer-portal/password-link", volunteerAccountLimiter, async(req, res) => {
+    try {
+        const email = sanitizeInput(req.body.email).toLowerCase();
+        if (!isValidEmail(email)) return res.status(400).json({ error: "Enter a valid email address" });
+
+        const account = await VolunteerAccount.findOne({ email, status: "approved" }).select("name email");
+        if (account) {
+            const token = randomBytes(32).toString("hex");
+            const tokenHash = hashPasswordSetupToken(token);
+            await VolunteerAccount.updateOne(
+                { _id: account._id, status: "approved" },
+                { passwordSetupTokenHash: tokenHash, passwordSetupExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) }
+            );
+            try {
+                await sendVolunteerPasswordSetupEmail(req, account, token);
+            } catch (emailError) {
+                await VolunteerAccount.updateOne(
+                    { _id: account._id, passwordSetupTokenHash: tokenHash },
+                    { $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 } }
+                );
+                throw emailError;
+            }
+        }
+        res.json({ ok: true, message: "If this email belongs to an approved volunteer, a password setup link has been sent. Check your inbox and spam folder." });
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Volunteer password link error:", err.message);
+        }
+        res.status(502).json({ error: "We couldn’t send the password link. Please contact the admin." });
+    }
+});
+
+app.post("/api/volunteer-portal/set-password", volunteerAccountLimiter, async(req, res) => {
+    try {
+        const token = req.body.token;
+        const password = req.body.password;
+        if (typeof token !== "string" || !/^[a-f0-9]{64}$/i.test(token)) {
+            return res.status(400).json({ error: "This password link is invalid or expired. Request a new one." });
+        }
+        if (typeof password !== "string" || password.length < 12 || password.length > 128) {
+            return res.status(400).json({ error: "Password must be between 12 and 128 characters" });
+        }
+
+        const tokenHash = hashPasswordSetupToken(token);
+        const account = await VolunteerAccount.findOne({
+            status: "approved",
+            passwordSetupTokenHash: tokenHash,
+            passwordSetupExpiresAt: { $gt: new Date() },
+        }).select("_id");
+        if (!account) return res.status(400).json({ error: "This password link is invalid or expired. Request a new one." });
+
+        const passwordHash = await bcryptjs.hash(password, 12);
+        const updated = await VolunteerAccount.findOneAndUpdate(
+            {
+                _id: account._id,
+                status: "approved",
+                passwordSetupTokenHash: tokenHash,
+                passwordSetupExpiresAt: { $gt: new Date() },
+            },
+            {
+                $set: { passwordHash },
+                $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 },
+            },
+            { new: true }
+        ).select("_id");
+        if (!updated) return res.status(400).json({ error: "This password link has already been used or expired. Request a new one." });
+        res.json({ ok: true, message: "Password set. You can now sign in." });
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Volunteer password setup error:", err.message);
+        }
+        res.status(500).json({ error: "Could not set your password. Please try again." });
     }
 });
 
@@ -525,7 +635,7 @@ app.post("/api/volunteer-portal/login", volunteerAccountLimiter, async(req, res)
         }
 
         const account = await VolunteerAccount.findOne({ email }).select("+passwordHash");
-        if (!account || !(await bcryptjs.compare(password, account.passwordHash))) {
+        if (!account) {
             return res.status(401).json({ error: "Invalid email or password" });
         }
         if (account.status !== "approved") {
@@ -534,6 +644,12 @@ app.post("/api/volunteer-portal/login", volunteerAccountLimiter, async(req, res)
                     ? "This volunteer account has not been approved."
                     : "Your account is awaiting admin approval.",
             });
+        }
+        if (!account.passwordHash) {
+            return res.status(403).json({ error: "Set your password using the link sent to your email, then sign in." });
+        }
+        if (!(await bcryptjs.compare(password, account.passwordHash))) {
+            return res.status(401).json({ error: "Invalid email or password" });
         }
 
         const token = jwt.sign(
@@ -777,26 +893,52 @@ app.patch("/api/admin/volunteer-accounts/:id", verifyAdmin, async(req, res) => {
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(400).json({ error: "Invalid account ID" });
         }
-        const updated = await VolunteerAccount.findOneAndUpdate(
+        const account = await VolunteerAccount.findOne(
             { _id: req.params.id, status: "pending" },
-            { status },
+        ).select("name email phone status");
+        if (!account) return res.status(404).json({ error: "Pending volunteer account not found" });
+
+        if (status === "rejected") {
+            const rejected = await VolunteerAccount.findOneAndUpdate(
+                { _id: account._id, status: "pending" },
+                { status: "rejected" },
+                { new: true, runValidators: true }
+            ).select("name email phone status createdAt");
+            if (!rejected) return res.status(409).json({ error: "Volunteer account was already updated" });
+            return res.json(rejected);
+        }
+
+        const setupToken = randomBytes(32).toString("hex");
+        const setupTokenHash = hashPasswordSetupToken(setupToken);
+        const approved = await VolunteerAccount.findOneAndUpdate(
+            { _id: account._id, status: "pending" },
+            {
+                status: "approved",
+                passwordSetupTokenHash: setupTokenHash,
+                passwordSetupExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            },
             { new: true, runValidators: true }
         ).select("name email phone status createdAt");
-        if (!updated) return res.status(404).json({ error: "Pending volunteer account not found" });
+        if (!approved) return res.status(409).json({ error: "Volunteer account was already updated" });
 
-        if (status === "approved") {
-            transporter.sendMail({
-                from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
-                to: updated.email,
-                subject: "Your Tails of Bijapur volunteer account is approved",
-                text: `Hello ${updated.name}, your volunteer portal account has been approved. You can now sign in and register puppies for the adoption drive.`,
-            }).catch((err) => {
-                if (process.env.NODE_ENV !== "production") {
-                    console.error("Volunteer account approval email failed:", err.message);
+        try {
+            await sendVolunteerPasswordSetupEmail(req, approved, setupToken);
+        } catch (emailError) {
+            await VolunteerAccount.updateOne(
+                { _id: approved._id, status: "approved", passwordSetupTokenHash: setupTokenHash },
+                {
+                    $set: { status: "pending" },
+                    $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 },
                 }
+            );
+            if (process.env.NODE_ENV !== "production") {
+                console.error("Volunteer account approval email failed:", emailError.message);
+            }
+            return res.status(502).json({
+                error: "Approval was not completed because the password setup email could not be sent. Check the email configuration and try again.",
             });
         }
-        res.json(updated);
+        res.json(approved);
     } catch (err) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Update volunteer portal account error:", err.message);

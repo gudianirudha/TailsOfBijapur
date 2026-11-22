@@ -444,7 +444,7 @@ export default function Admin() {
             <div className="rounded-xl bg-orange-600/20 p-3 text-orange-500"><Users size={24} /></div>
             <div>
               <h2 className="text-4xl font-black uppercase tracking-tighter md:text-5xl">Portal access requests</h2>
-              <p className="mt-1 text-sm text-gray-500">Approve volunteers before they can register puppies.</p>
+              <p className="mt-1 text-sm text-gray-500">Approval emails a one-time link for the volunteer to create their password.</p>
             </div>
           </div>
           {driveDataError && (

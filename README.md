@@ -82,6 +82,7 @@ SMTP_PASS=your_smtp_password
 
 Notes:
 - If you don't need real email sending during local development, you can use a testing SMTP (Mailtrap) or provide placeholder values and skip email testing.
+- Volunteer portal access requests are approved in the admin dashboard. Approval sends a one-time password setup link that expires after 24 hours, so configure working SMTP credentials and `FRONTEND_URL` for this flow. Approved volunteers can request another password link from the portal sign-in page.
 - Frontend: Vite proxies `/api` to `http://localhost:4000` by default (see `frontend/vite.config.js`), so you don't strictly need frontend env vars. If you prefer absolute API URLs, create `frontend/.env` with:
   ```
   VITE_API_BASE=http://localhost:4000/api

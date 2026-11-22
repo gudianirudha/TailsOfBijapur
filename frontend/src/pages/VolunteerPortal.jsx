@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ArrowRight, Camera, Check, LogOut, PawPrint, Upload } from "lucide-react";
 
 const EMPTY_PUPPY = {
@@ -23,8 +24,10 @@ function Field({ label, children }) {
 const inputClass = "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-orange-600 focus:ring-2 focus:ring-orange-600/15";
 
 export default function VolunteerPortal() {
-  const [mode, setMode] = useState("login");
-  const [credentials, setCredentials] = useState({ name: "", email: "", phone: "", password: "" });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const setupToken = searchParams.get("setupToken") || "";
+  const [mode, setMode] = useState(setupToken ? "setup" : "login");
+  const [credentials, setCredentials] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [puppy, setPuppy] = useState(EMPTY_PUPPY);
   const [photos, setPhotos] = useState([]);
   const [puppies, setPuppies] = useState([]);
@@ -59,17 +62,37 @@ export default function VolunteerPortal() {
     setMessage({ type: "", text: "" });
     try {
       const registering = mode === "register";
-      const response = await fetch(`/api/volunteer-portal/${registering ? "register" : "login"}`, {
+      if (mode === "setup" && credentials.password !== credentials.confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
+      const endpoint = {
+        register: "/api/volunteer-portal/register",
+        login: "/api/volunteer-portal/login",
+        forgot: "/api/volunteer-portal/password-link",
+        setup: "/api/volunteer-portal/set-password",
+      }[mode];
+      const body = mode === "setup"
+        ? { token: setupToken, password: credentials.password }
+        : mode === "forgot"
+          ? { email: credentials.email }
+          : credentials;
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify(body),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not complete the request.");
       if (registering) {
         setMode("login");
-        setCredentials((current) => ({ ...current, password: "" }));
         setMessage({ type: "success", text: data.message });
+      } else if (mode === "forgot") {
+        setMessage({ type: "success", text: data.message });
+      } else if (mode === "setup") {
+        setSearchParams({});
+        setMode("login");
+        setCredentials((current) => ({ ...current, password: "", confirmPassword: "" }));
+        setMessage({ type: "success", text: "Password set. You can now sign in." });
       } else {
         sessionStorage.setItem("volunteerToken", data.token);
         setToken(data.token);
@@ -141,6 +164,15 @@ export default function VolunteerPortal() {
 
   if (!token) {
     const registering = mode === "register";
+    const settingPassword = mode === "setup";
+    const requestingPasswordLink = mode === "forgot";
+    const title = registering
+      ? "Volunteer registration"
+      : settingPassword
+        ? "Set your password"
+        : requestingPasswordLink
+          ? "Password setup link"
+          : "Volunteer portal";
     return (
       <main className="min-h-screen bg-[#f1ece2] px-4 py-16 text-stone-900">
         <div className="mx-auto max-w-lg rounded-3xl border border-stone-200 bg-white p-7 shadow-xl sm:p-10">
@@ -148,11 +180,15 @@ export default function VolunteerPortal() {
             <PawPrint size={27} />
             <p className="text-xs font-black uppercase tracking-[0.2em]">Tails of Bijapur · Internal</p>
           </div>
-          <h1 className="text-3xl font-black tracking-tight">{registering ? "Volunteer registration" : "Volunteer portal"}</h1>
+          <h1 className="text-3xl font-black tracking-tight">{title}</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
             {registering
-              ? "Create an account. You can sign in once an admin approves your request."
-              : "Sign in to register puppies and keep their adoption records up to date."}
+              ? "Request access with your contact details. If approved, you’ll receive an email link to set your password."
+              : settingPassword
+                ? "Choose a password for your approved volunteer account. This setup link expires after 24 hours."
+                : requestingPasswordLink
+                  ? "Enter the email you registered with. If your account is approved, we’ll send a password setup link."
+                  : "Sign in to register puppies and keep their adoption records up to date."}
           </p>
           <form onSubmit={submitAccount} className="mt-7 space-y-4">
             {registering && (
@@ -165,22 +201,52 @@ export default function VolunteerPortal() {
                 </Field>
               </>
             )}
-            <Field label="Email">
-              <input className={inputClass} type="email" autoComplete="email" maxLength={254} required value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} />
-            </Field>
-            <Field label={registering ? "Password (12+ characters)" : "Password"}>
-              <input className={inputClass} type="password" autoComplete={registering ? "new-password" : "current-password"} minLength={registering ? 12 : undefined} maxLength={128} required value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} />
-            </Field>
+            {mode !== "setup" && (
+              <Field label="Email">
+                <input className={inputClass} type="email" autoComplete="email" maxLength={254} required value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} />
+              </Field>
+            )}
+            {(mode === "login" || settingPassword) && (
+              <Field label={settingPassword ? "New password (12+ characters)" : "Password"}>
+                <input className={inputClass} type="password" autoComplete={settingPassword ? "new-password" : "current-password"} minLength={settingPassword ? 12 : undefined} maxLength={128} required value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} />
+              </Field>
+            )}
+            {settingPassword && (
+              <Field label="Confirm new password">
+                <input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={credentials.confirmPassword} onChange={(event) => setCredentials({ ...credentials, confirmPassword: event.target.value })} />
+              </Field>
+            )}
             {message.text && (
               <p className={`rounded-xl p-3 text-sm ${message.type === "error" ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} role="status">{message.text}</p>
             )}
             <button type="submit" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-bold text-white transition hover:bg-orange-700 disabled:opacity-60">
-              {busy ? "Please wait…" : registering ? "Request access" : "Sign in"} <ArrowRight size={17} />
+              {busy ? "Please wait…" : registering ? "Request access" : settingPassword ? "Set password" : requestingPasswordLink ? "Send setup link" : "Sign in"} <ArrowRight size={17} />
             </button>
           </form>
-          <button type="button" className="mt-5 text-sm font-semibold text-orange-800 underline underline-offset-4" onClick={() => { setMode(registering ? "login" : "register"); setMessage({ type: "", text: "" }); }}>
-            {registering ? "Already registered? Sign in" : "New volunteer? Request portal access"}
-          </button>
+          {!settingPassword && (
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+              {mode !== "login" && (
+                <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("login"); setMessage({ type: "", text: "" }); }}>
+                  Back to sign in
+                </button>
+              )}
+              {mode === "login" && (
+                <>
+                  <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("forgot"); setMessage({ type: "", text: "" }); }}>
+                    Approved but need to set/reset your password?
+                  </button>
+                  <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("register"); setMessage({ type: "", text: "" }); }}>
+                    New volunteer? Request access
+                  </button>
+                </>
+              )}
+              {mode === "register" && (
+                <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("login"); setMessage({ type: "", text: "" }); }}>
+                  Already registered? Sign in
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </main>
     );
