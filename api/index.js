@@ -137,10 +137,11 @@ const puppySchema = new mongoose.Schema({
     name: { type: String, maxlength: 80, default: "" },
     age: { type: String, required: true, maxlength: 40 },
     gender: { type: String, enum: ["female", "male", "unknown"], required: true },
-    vaccination: { type: String, required: true, maxlength: 500 },
-    healthNotes: { type: String, maxlength: 1000, default: "" },
-    temperament: { type: String, maxlength: 1000, default: "" },
-    rescueLocation: { type: String, maxlength: 200, default: "" },
+    vaccination: { type: String, maxlength: 500 },
+    dhppiDoseCount: { type: Number, min: 0, validate: Number.isInteger },
+    antiRabiesDate: { type: String, match: /^\d{4}-\d{2}-\d{2}$/ },
+    fosterName: { type: String, maxlength: 100, default: "" },
+    location: { type: String, maxlength: 200, default: "" },
     photos: [{ url: { type: String, required: true }, publicId: { type: String, required: true } }],
     volunteerId: { type: mongoose.Schema.Types.ObjectId, ref: "VolunteerAccount", required: true, index: true },
     status: { type: String, enum: ["available", "adopted"], default: "available", index: true },
@@ -211,10 +212,16 @@ const upload = multer({
 });
 
 const puppyPhotosUpload = (req, res, next) => {
-    upload.array("photos", 5)(req, res, (error) => {
+    upload.array("photos", 1)(req, res, (error) => {
         if (error) {
             const status = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;
-            return res.status(status).json({ error: error.code === "LIMIT_FILE_SIZE" ? "Each photo must be 5 MB or smaller" : error.message });
+            return res.status(status).json({
+                error: error.code === "LIMIT_FILE_SIZE"
+                    ? "The puppy photo must be 5 MB or smaller"
+                    : error.code === "LIMIT_UNEXPECTED_FILE"
+                        ? "Upload no more than one puppy photo"
+                        : error.message,
+            });
         }
         next();
     });
@@ -1036,19 +1043,36 @@ app.post("/api/volunteer-portal/puppies", verifyVolunteer, puppyPhotosUpload, as
         const name = sanitizeInput(req.body.name);
         const age = sanitizeInput(req.body.age);
         const gender = req.body.gender;
-        const vaccination = sanitizeInput(req.body.vaccination);
-        const healthNotes = sanitizeInput(req.body.healthNotes);
-        const temperament = sanitizeInput(req.body.temperament);
-        const rescueLocation = sanitizeInput(req.body.rescueLocation);
+        const fosterName = sanitizeInput(req.body.fosterName);
+        const location = sanitizeInput(req.body.location);
+        const dhppiDoseCountInput = req.body.dhppiDoseCount;
+        const antiRabiesDate = sanitizeInput(req.body.antiRabiesDate);
         const photos = (req.files || []).map((file) => ({ url: file.path, publicId: file.filename }));
 
-        if (!age || !vaccination || !["female", "male", "unknown"].includes(gender)) {
-            return res.status(400).json({ error: "Age, gender, and vaccination details are required" });
+        if (!age || !fosterName || !location || !["female", "male", "unknown"].includes(gender)) {
+            return res.status(400).json({ error: "Age, gender, foster name, and location are required" });
         }
         if (!photos.length) return res.status(400).json({ error: "Upload at least one puppy photo" });
-        if (name.length > 80 || age.length > 40 || vaccination.length > 500 ||
-            healthNotes.length > 1000 || temperament.length > 1000 || rescueLocation.length > 200) {
+        if (photos.length > 1) return res.status(400).json({ error: "Upload no more than one puppy photo" });
+        if (name.length > 80 || age.length > 40 || fosterName.length > 100 || location.length > 200) {
             return res.status(400).json({ error: "One or more puppy details are too long" });
+        }
+
+        let dhppiDoseCount;
+        if (dhppiDoseCountInput !== undefined && dhppiDoseCountInput !== "") {
+            const doseCountInput = String(dhppiDoseCountInput);
+            if (!/^\d+$/.test(doseCountInput)) {
+                return res.status(400).json({ error: "DHPPi dose count must be a non-negative whole number" });
+            }
+            dhppiDoseCount = Number(doseCountInput);
+        }
+        if (antiRabiesDate) {
+            const parsedDate = new Date(`${antiRabiesDate}T00:00:00.000Z`);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(antiRabiesDate) ||
+                Number.isNaN(parsedDate.getTime()) ||
+                parsedDate.toISOString().slice(0, 10) !== antiRabiesDate) {
+                return res.status(400).json({ error: "Enter a valid anti-rabies vaccination date" });
+            }
         }
 
         const year = new Date().getFullYear();
@@ -1063,10 +1087,10 @@ app.post("/api/volunteer-portal/puppies", verifyVolunteer, puppyPhotosUpload, as
             name,
             age,
             gender,
-            vaccination,
-            healthNotes,
-            temperament,
-            rescueLocation,
+            dhppiDoseCount,
+            antiRabiesDate,
+            fosterName: fosterName.slice(0, 100),
+            location: location.slice(0, 200),
             photos,
             volunteerId: req.volunteerId,
         });

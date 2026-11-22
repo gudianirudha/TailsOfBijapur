@@ -6,10 +6,10 @@ const EMPTY_PUPPY = {
   name: "",
   age: "",
   gender: "",
-  vaccination: "",
-  healthNotes: "",
-  temperament: "",
-  rescueLocation: "",
+  dhppiDoseCount: "",
+  antiRabiesDate: "",
+  fosterName: "",
+  location: "",
 };
 
 function Field({ label, children }) {
@@ -256,35 +256,39 @@ export default function VolunteerPortal() {
             <Field label="Puppy name (if known)">
               <input className={inputClass} maxLength={80} value={puppy.name} onChange={(event) => setPuppy({ ...puppy, name: event.target.value })} />
             </Field>
-            <Field label="Age / estimate">
+            <Field label="Age">
               <input className={inputClass} placeholder="e.g. 8 weeks" maxLength={40} required value={puppy.age} onChange={(event) => setPuppy({ ...puppy, age: event.target.value })} />
             </Field>
-            <Field label="Sex">
+            <Field label="Gender">
               <select className={inputClass} required value={puppy.gender} onChange={(event) => setPuppy({ ...puppy, gender: event.target.value })}>
                 <option value="">Select</option><option value="female">Female</option><option value="male">Male</option><option value="unknown">Unknown</option>
               </select>
             </Field>
-            <Field label="Vaccination / medical status">
-              <input className={inputClass} placeholder="e.g. First vaccination pending" maxLength={500} required value={puppy.vaccination} onChange={(event) => setPuppy({ ...puppy, vaccination: event.target.value })} />
+            <div className="md:col-span-2">
+              <h3 className="mb-3 text-sm font-black uppercase tracking-wider text-stone-700">Vaccination details</h3>
+              <div className="grid gap-5 md:grid-cols-2">
+                <Field label="DHPPi number of doses">
+                  <input className={inputClass} type="number" min="0" step="1" inputMode="numeric" value={puppy.dhppiDoseCount} onChange={(event) => setPuppy({ ...puppy, dhppiDoseCount: event.target.value })} />
+                </Field>
+                <Field label="Anti-rabies vaccination date">
+                  <input className={inputClass} type="date" value={puppy.antiRabiesDate} onChange={(event) => setPuppy({ ...puppy, antiRabiesDate: event.target.value })} />
+                </Field>
+              </div>
+            </div>
+            <Field label="Name of the foster">
+              <input className={inputClass} maxLength={100} required value={puppy.fosterName} onChange={(event) => setPuppy({ ...puppy, fosterName: event.target.value })} />
             </Field>
-            <Field label="Rescue / pickup location">
-              <input className={inputClass} maxLength={200} value={puppy.rescueLocation} onChange={(event) => setPuppy({ ...puppy, rescueLocation: event.target.value })} />
+            <Field label="Location">
+              <input className={inputClass} maxLength={200} required value={puppy.location} onChange={(event) => setPuppy({ ...puppy, location: event.target.value })} />
             </Field>
-            <Field label="Temperament / behaviour">
-              <input className={inputClass} placeholder="e.g. Gentle, playful, shy" maxLength={1000} value={puppy.temperament} onChange={(event) => setPuppy({ ...puppy, temperament: event.target.value })} />
-            </Field>
-            <Field label="Health notes">
-              <textarea className={inputClass} rows={3} maxLength={1000} value={puppy.healthNotes} onChange={(event) => setPuppy({ ...puppy, healthNotes: event.target.value })} />
-            </Field>
-            <Field label="Photos (1–5, JPG or PNG; max 5 MB each)">
+            <Field label="Photo (1 max, JPG or PNG; max 5 MB)">
               <span className="flex items-center gap-3 rounded-xl border border-dashed border-stone-400 bg-stone-50 px-4 py-3 text-sm text-stone-600">
                 <Upload size={18} />
-                <input className="min-w-0 flex-1 text-xs" type="file" accept="image/jpeg,image/png" multiple required onChange={(event) => setPhotos(Array.from(event.target.files || []))} />
+                <input className="min-w-0 flex-1 text-xs" type="file" accept="image/jpeg,image/png" required onChange={(event) => setPhotos(Array.from(event.target.files || []).slice(0, 1))} />
               </span>
-              {photos.length > 0 && <span className="text-xs text-stone-500">{photos.length} photo{photos.length === 1 ? "" : "s"} selected</span>}
-              {photos.length > 5 && <span className="text-xs text-red-700">Choose no more than five photos.</span>}
+              {photos.length > 0 && <span className="text-xs text-stone-500">1 photo selected</span>}
             </Field>
-            <button type="submit" disabled={busy || photos.length > 5} className="md:col-span-2 rounded-xl bg-orange-800 px-5 py-3.5 font-bold text-white transition hover:bg-orange-900 disabled:opacity-60">
+            <button type="submit" disabled={busy} className="md:col-span-2 rounded-xl bg-orange-800 px-5 py-3.5 font-bold text-white transition hover:bg-orange-900 disabled:opacity-60">
               {busy ? "Registering puppy…" : "Register puppy"}
             </button>
           </form>
@@ -307,12 +311,15 @@ export default function VolunteerPortal() {
                       <div><p className="text-xs font-black uppercase tracking-widest text-orange-800">{item.tagNumber}</p><h3 className="mt-1 text-xl font-black">{item.name || "Unnamed puppy"}</h3></div>
                       <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${item.status === "adopted" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}>{item.status}</span>
                     </div>
-                    <p className="text-sm leading-6 text-stone-600">
-                      {item.age} · {item.gender} · Vaccination: {item.vaccination}
-                      {item.rescueLocation && ` · Found at ${item.rescueLocation}`}
-                    </p>
-                    {item.temperament && <p className="text-sm text-stone-600">Temperament: {item.temperament}</p>}
-                    {item.healthNotes && <p className="text-sm text-stone-600">Health: {item.healthNotes}</p>}
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-stone-600">
+                      <div><dt className="font-bold text-stone-800">Age</dt><dd>{item.age}</dd></div>
+                      <div><dt className="font-bold text-stone-800">Gender</dt><dd>{item.gender}</dd></div>
+                      <div><dt className="font-bold text-stone-800">DHPPi doses</dt><dd>{item.dhppiDoseCount ?? "Not recorded"}</dd></div>
+                      <div><dt className="font-bold text-stone-800">Anti-rabies date</dt><dd>{item.antiRabiesDate || "Not recorded"}</dd></div>
+                      <div><dt className="font-bold text-stone-800">Foster</dt><dd>{item.fosterName || "Not recorded"}</dd></div>
+                      <div><dt className="font-bold text-stone-800">Location</dt><dd>{item.location || item.rescueLocation || "Not recorded"}</dd></div>
+                      {item.vaccination && <div className="col-span-2"><dt className="font-bold text-stone-800">Previous vaccination notes</dt><dd>{item.vaccination}</dd></div>}
+                    </dl>
                     {item.status === "adopted" ? (
                       <div className="rounded-xl bg-green-50 p-4 text-sm leading-6 text-green-950">
                         <p className="mb-1 flex items-center gap-2 font-bold"><Check size={16} /> Adopted by {item.adoption.name}</p>

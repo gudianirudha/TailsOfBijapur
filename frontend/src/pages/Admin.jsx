@@ -421,7 +421,15 @@ export default function Admin() {
                       <div><p className="text-xs font-black uppercase tracking-widest text-orange-500">{item.tagNumber}</p><h3 className="mt-1 text-2xl font-black text-white">{item.name || "Unnamed puppy"}</h3></div>
                       <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase text-gray-300">{item.status}</span>
                     </div>
-                    <p className="text-sm text-gray-400">{item.age} · {item.gender} · {item.vaccination}</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-400">
+                      <p><span className="font-bold text-gray-300">Age:</span> {item.age}</p>
+                      <p><span className="font-bold text-gray-300">Gender:</span> {item.gender}</p>
+                      <p><span className="font-bold text-gray-300">DHPPi doses:</span> {item.dhppiDoseCount ?? "Not recorded"}</p>
+                      <p><span className="font-bold text-gray-300">Anti-rabies date:</span> {item.antiRabiesDate || "Not recorded"}</p>
+                      <p><span className="font-bold text-gray-300">Foster:</span> {item.fosterName || "Not recorded"}</p>
+                      <p><span className="font-bold text-gray-300">Location:</span> {item.location || item.rescueLocation || "Not recorded"}</p>
+                      {item.vaccination && <p className="col-span-2"><span className="font-bold text-gray-300">Previous vaccination notes:</span> {item.vaccination}</p>}
+                    </div>
                     <p className="text-xs text-gray-500">Registered by {item.volunteerId?.name || "Unknown volunteer"} ({item.volunteerId?.email || "no email"})</p>
                     {item.status === "adopted" && (
                       <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-sm leading-6 text-gray-300">
