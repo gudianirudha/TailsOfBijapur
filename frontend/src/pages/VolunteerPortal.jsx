@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowRight, CalendarDays, Camera, Check, LogOut, PawPrint, Plus, Trash2, Upload } from "lucide-react";
+import { ArrowRight, CalendarDays, Camera, Check, Download, LogOut, PawPrint, Plus, Trash2, Upload, X } from "lucide-react";
 
 const EMPTY_PUPPY = {
   name: "",
@@ -37,6 +37,7 @@ export default function VolunteerPortal() {
   const [puppy, setPuppy] = useState(EMPTY_PUPPY);
   const [photos, setPhotos] = useState([]);
   const [puppies, setPuppies] = useState([]);
+  const [healthCardPuppy, setHealthCardPuppy] = useState(null);
   const [token, setToken] = useState(() => sessionStorage.getItem("volunteerToken") || "");
   const [busy, setBusy] = useState(false);
   const [adoptingId, setAdoptingId] = useState("");
@@ -399,6 +400,13 @@ export default function VolunteerPortal() {
                         <p className="mb-1 flex items-center gap-2 font-bold"><Check size={16} /> Adopted by {item.adoption.name}</p>
                         <p>{item.adoption.phone}</p><p>{item.adoption.address}</p>
                         <p className="mt-1 text-xs text-green-800">{new Date(item.adoption.adoptedAt).toLocaleString()}</p>
+                        <button
+                          type="button"
+                          onClick={() => setHealthCardPuppy(item)}
+                          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-800 px-4 py-3 font-bold text-white transition hover:bg-green-900"
+                        >
+                          <Download size={17} /> View & download health card
+                        </button>
                       </div>
                     ) : adoptingId === item._id ? (
                       <form onSubmit={(event) => submitAdoption(event, item._id)} className="space-y-3 rounded-xl bg-stone-50 p-4">
@@ -432,6 +440,128 @@ export default function VolunteerPortal() {
           )}
         </section>
       </div>
+      {healthCardPuppy && (
+        <div className="health-card-overlay fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-stone-950/70 p-4">
+          <section
+            id="puppy-health-card-print"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="health-card-title"
+            className="my-auto w-full max-w-2xl rounded-3xl bg-white p-5 shadow-2xl sm:p-8"
+          >
+            <div className="health-card-actions mb-5 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-xl font-black text-stone-900">Puppy health card preview</h2>
+              <button
+                type="button"
+                onClick={() => setHealthCardPuppy(null)}
+                aria-label="Close health card preview"
+                className="rounded-full border border-stone-300 p-2 text-stone-600 hover:bg-stone-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="rounded-2xl border-2 border-orange-800/20 p-5 sm:p-7">
+              <header className="flex items-start justify-between gap-4 border-b border-stone-200 pb-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-800">Tails of Bijapur</p>
+                  <h1 id="health-card-title" className="mt-2 text-2xl font-black text-stone-900 sm:text-3xl">Puppy health card</h1>
+                  <p className="mt-1 text-sm text-stone-600">Vaccination record for the adopter</p>
+                </div>
+                {healthCardPuppy.photos?.[0] && (
+                  <img
+                    className="h-20 w-20 rounded-xl object-cover sm:h-28 sm:w-28"
+                    src={healthCardPuppy.photos[0].url}
+                    alt={healthCardPuppy.name || `Puppy ${healthCardPuppy.tagNumber}`}
+                  />
+                )}
+              </header>
+              <section className="border-b border-stone-200 py-5">
+                <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-stone-500">Puppy details</h3>
+                <dl className="grid grid-cols-2 gap-x-5 gap-y-3 text-sm">
+                  <div><dt className="font-bold text-stone-500">Name</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.name || "Unnamed puppy"}</dd></div>
+                  <div><dt className="font-bold text-stone-500">Tag number</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.tagNumber}</dd></div>
+                  <div><dt className="font-bold text-stone-500">Age</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.age || "Not recorded"}</dd></div>
+                  <div><dt className="font-bold text-stone-500">Gender</dt><dd className="mt-0.5 font-semibold capitalize text-stone-900">{healthCardPuppy.gender || "Not recorded"}</dd></div>
+                </dl>
+              </section>
+              <section className="border-b border-stone-200 py-5">
+                <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-stone-500">Vaccination history</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-xl bg-stone-50 p-4">
+                    <h4 className="font-bold text-stone-900">DHPPi</h4>
+                    {healthCardPuppy.dhppiVaccinations?.length ? (
+                      <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-stone-700">
+                        {healthCardPuppy.dhppiVaccinations.map((date, index) => <li key={`${date}-${index}`}>Dose {index + 1} · {formatVaccinationDate(date)}</li>)}
+                      </ol>
+                    ) : healthCardPuppy.dhppiDoseCount != null ? (
+                      <p className="mt-2 text-sm text-stone-700">{healthCardPuppy.dhppiDoseCount} dose(s) recorded; dates unavailable.</p>
+                    ) : (
+                      <p className="mt-2 text-sm text-stone-500">No doses recorded.</p>
+                    )}
+                  </div>
+                  <div className="rounded-xl bg-stone-50 p-4">
+                    <h4 className="font-bold text-stone-900">Anti-rabies</h4>
+                    {healthCardPuppy.antiRabiesVaccinations?.length ? (
+                      <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-stone-700">
+                        {healthCardPuppy.antiRabiesVaccinations.map((date, index) => <li key={`${date}-${index}`}>{formatVaccinationDate(date)}</li>)}
+                      </ol>
+                    ) : (
+                      <p className="mt-2 text-sm text-stone-500">{healthCardPuppy.antiRabiesDate || "No doses recorded."}</p>
+                    )}
+                  </div>
+                </div>
+                {healthCardPuppy.vaccination && <p className="mt-3 text-sm text-stone-600"><span className="font-bold">Previous vaccination notes:</span> {healthCardPuppy.vaccination}</p>}
+              </section>
+              <section className="py-5">
+                <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-stone-500">Foster details</h3>
+                <dl className="grid grid-cols-2 gap-x-5 gap-y-3 text-sm">
+                  <div><dt className="font-bold text-stone-500">Foster name</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.fosterName || "Not recorded"}</dd></div>
+                  <div><dt className="font-bold text-stone-500">Location</dt><dd className="mt-0.5 font-semibold text-stone-900">{healthCardPuppy.location || healthCardPuppy.rescueLocation || "Not recorded"}</dd></div>
+                </dl>
+              </section>
+              <p className="border-t border-stone-200 pt-4 text-xs leading-5 text-stone-500">
+                This card reflects the vaccination information recorded at intake. Please consult a veterinarian to confirm the puppy’s ongoing vaccination and care schedule.
+              </p>
+            </div>
+            <div className="health-card-actions mt-5 flex flex-col-reverse justify-end gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => setHealthCardPuppy(null)}
+                className="rounded-xl border border-stone-300 px-5 py-3 text-sm font-bold text-stone-700 hover:bg-stone-50"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-800 px-5 py-3 text-sm font-bold text-white hover:bg-orange-900"
+              >
+                <Download size={17} /> Download / print
+              </button>
+            </div>
+          </section>
+          <style>{`
+            @media print {
+              @page { size: A4; margin: 14mm; }
+              body * { visibility: hidden !important; }
+              #puppy-health-card-print, #puppy-health-card-print * { visibility: visible !important; }
+              #puppy-health-card-print {
+                position: fixed !important;
+                inset: 0 auto auto 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+              }
+              #puppy-health-card-print > div:nth-child(2) { border: 1px solid #d6d3d1 !important; }
+              .health-card-overlay { position: static !important; display: block !important; overflow: visible !important; background: white !important; padding: 0 !important; }
+              .health-card-actions { display: none !important; }
+            }
+          `}</style>
+        </div>
+      )}
     </main>
   );
 }
