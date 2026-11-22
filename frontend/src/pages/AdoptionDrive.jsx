@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   Heart,
   HeartHandshake,
+  PawPrint,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -128,8 +130,10 @@ function LivePuppyDashboard() {
   const [loaded, setLoaded] = useState(false);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboard = useCallback(async () => {
+    setRefreshing(true);
     try {
       const response = await fetch("/api/drive/puppies", { cache: "no-store" });
       const data = await readApiJson(response, "Live puppy dashboard");
@@ -142,6 +146,8 @@ function LivePuppyDashboard() {
       setUpdatedAt(new Date());
     } catch (loadError) {
       setError(loadError.message || "Live puppy dashboard is temporarily unavailable.");
+    } finally {
+      setRefreshing(false);
     }
   }, []);
 
@@ -161,19 +167,33 @@ function LivePuppyDashboard() {
   const puppies = filter === "all"
     ? dashboard.puppies
     : dashboard.puppies.filter((puppy) => puppy.status === filter);
+  const totalPuppies = dashboard.available + dashboard.adopted;
+  const adoptionProgress = totalPuppies ? Math.round((dashboard.adopted / totalPuppies) * 100) : 0;
+  const filterCounts = {
+    all: totalPuppies,
+    available: dashboard.available,
+    adopted: dashboard.adopted,
+  };
 
   return (
     <section className="drive-live-dashboard" aria-labelledby="drive-live-dashboard-title">
       <div className="drive-wrap">
         <Reveal className="drive-live-dashboard__header">
           <div>
-            <p className="drive-eyebrow">Updated live</p>
+            <p className="drive-live-dashboard__eyebrow"><span aria-hidden="true" /> Live rescue updates</p>
             <h2 id="drive-live-dashboard-title">Puppy adoption dashboard</h2>
             <p className="drive-live-dashboard__intro">Meet the puppies coming to the drive and celebrate the ones who have found a home.</p>
+            <Link className="drive-live-dashboard__cta" to="/adopt">Explore adoption <ArrowUpRight size={16} /></Link>
           </div>
           <div className="drive-live-dashboard__totals" aria-label="Puppy adoption totals">
-            <div><strong>{dashboard.available}</strong><span>Looking for homes</span></div>
-            <div><strong>{dashboard.adopted}</strong><span>Adopted</span></div>
+            <div className="is-available">
+              <span className="drive-live-dashboard__total-icon"><PawPrint size={17} /></span>
+              <strong>{dashboard.available}</strong><span>Looking for homes</span>
+            </div>
+            <div className="is-adopted">
+              <span className="drive-live-dashboard__total-icon"><Heart size={17} /></span>
+              <strong>{dashboard.adopted}</strong><span>Found their people</span>
+            </div>
           </div>
         </Reveal>
 
@@ -191,13 +211,18 @@ function LivePuppyDashboard() {
                 aria-pressed={filter === value}
                 onClick={() => setFilter(value)}
               >
-                {label}
+                {label}<span>{filterCounts[value]}</span>
               </button>
             ))}
           </div>
-          <p className="drive-live-dashboard__updated" aria-live="polite">
-            {error ? "Updates paused" : updatedAt ? `Updated ${updatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Loading live updates…"}
-          </p>
+          <div className="drive-live-dashboard__sync">
+            <p className="drive-live-dashboard__updated" aria-live="polite">
+              {error ? "Updates paused" : updatedAt ? `Updated ${updatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Loading live updates…"}
+            </p>
+            <button type="button" onClick={loadDashboard} disabled={refreshing} aria-label="Refresh puppy dashboard" title="Refresh dashboard">
+              <RefreshCw size={15} className={refreshing ? "is-spinning" : ""} /> Refresh
+            </button>
+          </div>
         </div>
 
         {error && <p className="drive-live-dashboard__error" role="alert">{error}</p>}
@@ -205,22 +230,22 @@ function LivePuppyDashboard() {
         {puppies.length > 0 ? (
           <div className="drive-live-dashboard__grid">
             {puppies.map((puppy, index) => (
-              <Reveal key={`${puppy.name}-${index}`} delay={Math.min(index * 0.035, 0.2)} className="drive-live-puppy">
+              <Reveal key={`${puppy.name}-${puppy.photo}-${index}`} delay={Math.min(index * 0.035, 0.2)} className="drive-live-puppy">
                 {puppy.photo ? (
-                  <img src={puppy.photo} alt={puppy.name || "Puppy available for adoption"} loading="lazy" />
+                  <img src={puppy.photo} alt={puppy.name || "Puppy in the adoption drive"} loading="lazy" />
                 ) : (
-                  <div className="drive-live-puppy__placeholder"><Heart size={28} /></div>
+                  <div className="drive-live-puppy__placeholder"><PawPrint size={30} /></div>
                 )}
                 <div className="drive-live-puppy__info">
                   <div>
                     <h3>{puppy.name || "A lovely Indie pup"}</h3>
                     <span className={`drive-live-puppy__status${puppy.status === "adopted" ? " is-adopted" : ""}`}>
-                      {puppy.status === "adopted" ? "Found a home" : "Looking for a home"}
+                      {puppy.status === "adopted" ? "Adoption success" : "Ready to meet you"}
                     </span>
                   </div>
                   {puppy.status === "adopted" && (
                     <p className="drive-live-puppy__adopter">
-                      {puppy.adopterFirstName ? `Adopted by ${puppy.adopterFirstName}` : "A new family found each other"}
+                      {puppy.adopterFirstName ? `With ${puppy.adopterFirstName}` : "A new family found each other"}
                     </p>
                   )}
                 </div>
@@ -228,11 +253,25 @@ function LivePuppyDashboard() {
             ))}
           </div>
         ) : (
-          <p className="drive-live-dashboard__empty">
-            {loaded ? "Puppy profiles will appear here as volunteers register them." : "Loading puppy profiles…"}
-          </p>
+          <div className="drive-live-dashboard__empty">
+            <span className="drive-live-dashboard__empty-icon">{loaded ? <HeartHandshake size={25} /> : <PawPrint size={25} />}</span>
+            <h3>{loaded ? (filter === "all" ? "Puppy profiles are on their way" : `No ${filter} puppies to show`) : "Finding the latest puppy updates…"}</h3>
+            <p>{loaded
+              ? filter === "all"
+                ? "Volunteer-registered puppy profiles will appear here as they join the drive."
+                : `Check back soon for ${filter === "available" ? "new puppies looking for homes" : "more adoption stories"}.`
+              : "This usually only takes a moment."}</p>
+          </div>
         )}
-        <p className="drive-live-dashboard__privacy">Adopter contact details and addresses are kept private.</p>
+        <div className="drive-live-dashboard__footer">
+          {totalPuppies > 0 && (
+            <div className="drive-live-dashboard__progress" aria-label={`${adoptionProgress}% of recorded puppies have been adopted`}>
+              <div><span>Adoption stories</span><strong>{adoptionProgress}%</strong></div>
+              <span className="drive-live-dashboard__progress-track"><span style={{ width: `${adoptionProgress}%` }} /></span>
+            </div>
+          )}
+          <p className="drive-live-dashboard__privacy"><ShieldCheck size={14} /> Adopter contact details and addresses are kept private.</p>
+        </div>
       </div>
     </section>
   );
@@ -244,7 +283,7 @@ function ScreenPuppy() {
 
   useEffect(() => {
     const occupiedSections = new Set();
-    const sections = document.querySelectorAll(".drive-hero, #adoption-interest, #rsvp");
+    const sections = document.querySelectorAll(".drive-hero, #rsvp");
     if (!sections.length) {
       setShowShortcut(true);
       return;
@@ -504,146 +543,6 @@ function RsvpSection() {
   );
 }
 
-function AdoptionInterestSection() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    city: "",
-    homeType: "",
-    hasPets: "",
-    experience: "",
-    puppyName: "",
-    consent: false,
-  });
-  const [status, setStatus] = useState({ type: null, msg: "" });
-  const [busy, setBusy] = useState(false);
-
-  function updateField(event) {
-    const { name, value, checked, type } = event.target;
-    setForm((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
-  }
-
-  async function submit(event) {
-    event.preventDefault();
-    setBusy(true);
-    setStatus({ type: null, msg: "" });
-
-    try {
-      const response = await fetch("/api/drive/adoption-interest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "We couldn’t send your application. Please try again.");
-
-      setStatus({ type: "ok", msg: "Thanks for raising your hand! Our team will be in touch soon." });
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        city: "",
-        homeType: "",
-        hasPets: "",
-        experience: "",
-        puppyName: "",
-        consent: false,
-      });
-    } catch (error) {
-      setStatus({ type: "err", msg: error.message });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section id="adoption-interest" className="drive-interest scroll-mt-24">
-      <div className="drive-wrap drive-interest__grid">
-        <Reveal className="drive-interest__intro">
-          <p className="drive-eyebrow">Ready to make room for a best friend?</p>
-          <h2>Tell us a little about the home you’ll share.</h2>
-          <p>
-            This isn’t a commitment to adopt. It helps our team get to know you and make a thoughtful match. We’ll reach out to chat through next steps.
-          </p>
-          <div className="drive-interest__note">
-            <HeartHandshake size={20} />
-            <span>Every application is read by a person. There’s no fee to apply or adopt.</span>
-          </div>
-        </Reveal>
-
-        <Reveal delay={0.1} className="drive-interest__card">
-          <form onSubmit={submit} className="space-y-5">
-            <div className="drive-form-grid">
-              <div>
-                <label className="drive-label" htmlFor="interest-name">Your name *</label>
-                <input id="interest-name" name="name" className="drive-input" autoComplete="name" maxLength={80}
-                  required value={form.name} onChange={updateField} />
-              </div>
-              <div>
-                <label className="drive-label" htmlFor="interest-city">City / area *</label>
-                <input id="interest-city" name="city" className="drive-input" autoComplete="address-level2" maxLength={100}
-                  required value={form.city} onChange={updateField} />
-              </div>
-              <div>
-                <label className="drive-label" htmlFor="interest-email">Email address *</label>
-                <input id="interest-email" name="email" className="drive-input" autoComplete="email" type="email" maxLength={254}
-                  required value={form.email} onChange={updateField} />
-              </div>
-              <div>
-                <label className="drive-label" htmlFor="interest-phone">Phone number *</label>
-                <input id="interest-phone" name="phone" className="drive-input" autoComplete="tel" inputMode="tel" type="tel" maxLength={20}
-                  required value={form.phone} onChange={updateField} />
-              </div>
-              <div>
-                <label className="drive-label" htmlFor="interest-home">Your home *</label>
-                <select id="interest-home" name="homeType" className="drive-input drive-select" required value={form.homeType} onChange={updateField}>
-                  <option value="">Choose one</option>
-                  <option value="owned">Owned</option>
-                  <option value="rented">Rented, pets are permitted</option>
-                  <option value="other">Other / still figuring it out</option>
-                </select>
-              </div>
-              <div>
-                <label className="drive-label" htmlFor="interest-pets">Other pets at home? *</label>
-                <select id="interest-pets" name="hasPets" className="drive-input drive-select" required value={form.hasPets} onChange={updateField}>
-                  <option value="">Choose one</option>
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="drive-label" htmlFor="interest-experience">Have you cared for a dog before? *</label>
-              <textarea id="interest-experience" name="experience" className="drive-input drive-textarea" rows={3} maxLength={1200}
-                placeholder="A little about your experience, routine, or the support you have at home…" required value={form.experience} onChange={updateField} />
-            </div>
-            <div>
-              <label className="drive-label" htmlFor="interest-puppy">Is there a puppy you’ve already connected with?</label>
-              <input id="interest-puppy" name="puppyName" className="drive-input" maxLength={80}
-                placeholder="Optional — name or ‘no preference’" value={form.puppyName} onChange={updateField} />
-            </div>
-            <label className="drive-consent">
-              <input name="consent" type="checkbox" required checked={form.consent} onChange={updateField} />
-              <span>I agree that Tails of Bijapur may contact me about this adoption enquiry and use these details to help assess a suitable match.</span>
-            </label>
-            <button type="submit" className="drive-submit" disabled={busy}>
-              {busy ? "Sending your enquiry…" : "Send adoption enquiry"}
-              <ArrowUpRight size={18} />
-            </button>
-            {status.type && (
-              <p className={`flex items-start gap-2 text-sm ${status.type === "ok" ? "text-emerald-700" : "text-red-700"}`} role="status" aria-live="polite">
-                {status.type === "ok" ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
-                {status.msg}
-              </p>
-            )}
-          </form>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
 function ProudIndieParentSection() {
   return (
     <section className="drive-proud">
@@ -741,11 +640,8 @@ export default function AdoptionDrive() {
                   <a className="drive-button" href="#rsvp">
                     Save your spot <ArrowDown size={17} />
                   </a>
-                  <a className="drive-text-link" href="#adoption-interest">
-                    I’d like to adopt <Heart size={16} />
-                  </a>
                   <Link className="drive-text-link" to="/adopt">
-                    Meet dogs online <ArrowUpRight size={16} />
+                    I’d like to adopt <ArrowUpRight size={16} />
                   </Link>
                 </div>
               </Reveal>
@@ -836,7 +732,6 @@ export default function AdoptionDrive() {
         </div>
       </section>
 
-      <AdoptionInterestSection />
       <ProudIndieParentSection />
       <RsvpSection />
       <LivePuppyDashboard />
