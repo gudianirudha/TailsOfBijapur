@@ -9,11 +9,13 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const bcryptjs = require("bcryptjs");
+const { createHash, randomBytes } = require("crypto");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("./config/cloudinary");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+app.set("trust proxy", process.env.VERCEL === "1" ? 1 : false);
 
 /* ==============================
    Middleware
@@ -33,7 +35,10 @@ app.use(express.json());
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
 });
 
 /* ==============================
@@ -95,6 +100,7 @@ const volunteerSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
+    passwordHash: { type: String, select: false },
     role: { type: String, required: true, trim: true },
     time: { type: String, required: true, trim: true },
     why: { type: String, required: true, trim: true },
@@ -113,6 +119,50 @@ volunteerSchema.index({ email: 1 });
 
 const Adoption = mongoose.model("Adoption", adoptionSchema);
 const Volunteer = mongoose.model("Volunteer", volunteerSchema);
+
+const volunteerAccountSchema = new mongoose.Schema({
+    name: { type: String, required: true, maxlength: 80, trim: true },
+    email: { type: String, required: true, maxlength: 254, lowercase: true, trim: true, unique: true },
+    phone: { type: String, required: true, maxlength: 20, trim: true },
+    passwordHash: { type: String, select: false },
+    passwordSetupTokenHash: { type: String, select: false },
+    passwordSetupExpiresAt: { type: Date, select: false },
+    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending", index: true },
+}, { timestamps: true });
+volunteerAccountSchema.index({ status: 1, createdAt: -1 });
+const VolunteerAccount = mongoose.model("VolunteerAccount", volunteerAccountSchema);
+
+const puppySchema = new mongoose.Schema({
+    tagNumber: { type: String, required: true, unique: true },
+    name: { type: String, maxlength: 80, default: "" },
+    age: { type: String, required: true, maxlength: 40 },
+    gender: { type: String, enum: ["female", "male", "unknown"], required: true },
+    vaccination: { type: String, maxlength: 500 },
+    dhppiDoseCount: { type: Number, min: 0, validate: Number.isInteger },
+    antiRabiesDate: { type: String, match: /^\d{4}-\d{2}-\d{2}$/ },
+    dhppiVaccinations: [{ type: String, match: /^\d{4}-\d{2}-\d{2}$/ }],
+    antiRabiesVaccinations: [{ type: String, match: /^\d{4}-\d{2}-\d{2}$/ }],
+    fosterName: { type: String, maxlength: 100, default: "" },
+    location: { type: String, maxlength: 200, default: "" },
+    photos: [{ url: { type: String, required: true }, publicId: { type: String, required: true } }],
+    volunteerId: { type: mongoose.Schema.Types.ObjectId, ref: "VolunteerAccount", required: true, index: true },
+    status: { type: String, enum: ["available", "adopted"], default: "available", index: true },
+    adoption: {
+        name: { type: String, maxlength: 100 },
+        phone: { type: String, maxlength: 20 },
+        address: { type: String, maxlength: 500 },
+        publicNameConsent: { type: Boolean, default: false },
+        adoptedAt: Date,
+    },
+}, { timestamps: true });
+puppySchema.index({ status: 1, createdAt: -1 });
+const Puppy = mongoose.model("Puppy", puppySchema);
+
+const sequenceSchema = new mongoose.Schema({
+    name: { type: String, required: true, unique: true },
+    value: { type: Number, default: 0 },
+});
+const Sequence = mongoose.model("Sequence", sequenceSchema);
 
 const driveRsvpSchema = new mongoose.Schema({
     name: { type: String, required: true, maxlength: 60 },
@@ -162,6 +212,22 @@ const upload = multer({
         }
     },
 });
+
+const puppyPhotosUpload = (req, res, next) => {
+    upload.array("photos", 1)(req, res, (error) => {
+        if (error) {
+            const status = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+            return res.status(status).json({
+                error: error.code === "LIMIT_FILE_SIZE"
+                    ? "The puppy photo must be 5 MB or smaller"
+                    : error.code === "LIMIT_UNEXPECTED_FILE"
+                        ? "Upload no more than one puppy photo"
+                        : error.message,
+            });
+        }
+        next();
+    });
+};
 
 /* ==============================
    Validation Utilities
@@ -267,10 +333,13 @@ app.post(
 
 app.post("/api/volunteer", async(req, res) => {
     try {
-        const { name, email, phone, role, time, why } = req.body;
+        const { name, email, phone, role, time, why, password } = req.body;
 
-        if (!name || !email || !phone || !role || !time || !why) {
+        if (!name || !email || !phone || !role || !time || !why || typeof password !== "string") {
             return res.status(400).json({ error: "Missing required fields" });
+        }
+        if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+            return res.status(400).json({ error: "Password must be at least 12 characters and no more than 72 UTF-8 bytes" });
         }
 
         if (!isValidEmail(email)) {
@@ -281,10 +350,19 @@ app.post("/api/volunteer", async(req, res) => {
             return res.status(400).json({ error: "Invalid phone format" });
         }
 
+        const cleanName = sanitizeInput(name);
+        const cleanEmail = sanitizeInput(email).toLowerCase();
+        const cleanPhone = sanitizeInput(phone);
+        if (cleanName.length > 80 || cleanEmail.length > 254 || cleanPhone.length > 20) {
+            return res.status(400).json({ error: "Name, email, or phone number exceeds the allowed length" });
+        }
+
+        const passwordHash = await bcryptjs.hash(password, 12);
         const submission = await Volunteer.create({
-            name: sanitizeInput(name),
-            email: sanitizeInput(email).toLowerCase(),
-            phone: sanitizeInput(phone),
+            name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            passwordHash,
             role: sanitizeInput(role),
             time: sanitizeInput(time),
             why: sanitizeInput(why),
@@ -316,8 +394,20 @@ app.post("/api/volunteer", async(req, res) => {
    Adoption Drive RSVPs
 ============================== */
 
-const driveLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
-const adoptionInterestLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+const driveLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
+});
+const adoptionInterestLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
+});
 
 app.post("/api/drive/rsvp", driveLimiter, async(req, res) => {
     try {
@@ -434,6 +524,216 @@ app.post("/api/drive/adoption-interest", adoptionInterestLimiter, async(req, res
 });
 
 /* ==============================
+   Volunteer Portal Accounts
+============================== */
+
+const volunteerAccountLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { forwardedHeader: false },
+});
+
+function hashPasswordSetupToken(token) {
+    return createHash("sha256").update(token).digest("hex");
+}
+
+function getFrontendBaseUrl(req) {
+    const configuredUrl = process.env.FRONTEND_URL?.split(",")[0].trim();
+    return (configuredUrl || req.get("origin") || "http://localhost:5173").replace(/\/+$/, "");
+}
+
+function escapeHtml(value) {
+    return value.replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+    })[character]);
+}
+
+async function sendVolunteerPasswordSetupEmail(req, account, token) {
+    const setupUrl = `${getFrontendBaseUrl(req)}/volunteer-portal?setupToken=${encodeURIComponent(token)}`;
+    const result = await transporter.sendMail({
+        from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
+        to: account.email,
+        subject: "Reset your Tails of Bijapur volunteer portal password",
+        text: [
+            `Hello ${account.name},`,
+            "",
+            "Use this one-time link to set or reset your volunteer portal password:",
+            setupUrl,
+            "",
+            "This link expires in 24 hours. If you did not request this, you can ignore this email.",
+        ].join("\n"),
+        html: `<p>Hello ${escapeHtml(account.name)},</p><p>Use the one-time link below to set or reset your volunteer portal password. It expires in 24 hours.</p><p><a href="${setupUrl}">Set or reset your volunteer portal password</a></p><p>If you did not request this, you can ignore this email.</p>`,
+    });
+
+    const acceptedRecipient = result.accepted.some(
+        (recipient) => recipient.toLowerCase() === account.email.toLowerCase()
+    );
+    if (!acceptedRecipient) {
+        console.error("SMTP did not accept the volunteer password setup recipient", {
+            messageId: result.messageId,
+            acceptedCount: result.accepted.length,
+            rejectedCount: result.rejected.length,
+            response: result.response,
+        });
+        throw new Error("The email provider did not accept the password setup recipient");
+    }
+
+    console.info("SMTP accepted the volunteer password setup email", {
+        messageId: result.messageId,
+        response: result.response,
+    });
+}
+
+app.post("/api/volunteer-portal/password-link", volunteerAccountLimiter, async(req, res) => {
+    try {
+        const email = sanitizeInput(req.body.email).toLowerCase();
+        if (!isValidEmail(email)) return res.status(400).json({ error: "Enter a valid email address" });
+
+        const account = await VolunteerAccount.findOne({ email, status: "approved" }).select("name email");
+        if (account) {
+            const token = randomBytes(32).toString("hex");
+            const tokenHash = hashPasswordSetupToken(token);
+            await VolunteerAccount.updateOne(
+                { _id: account._id, status: "approved" },
+                { passwordSetupTokenHash: tokenHash, passwordSetupExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) }
+            );
+            try {
+                await sendVolunteerPasswordSetupEmail(req, account, token);
+            } catch (emailError) {
+                await VolunteerAccount.updateOne(
+                    { _id: account._id, passwordSetupTokenHash: tokenHash },
+                    { $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 } }
+                );
+                throw emailError;
+            }
+        }
+        res.json({ ok: true, message: "If this email belongs to an approved volunteer, a password reset link has been sent. Check your inbox and spam folder." });
+    } catch (err) {
+        console.error("Volunteer password link error:", err.message);
+        res.status(502).json({ error: "We couldn’t send the password link. Please contact the admin." });
+    }
+});
+
+app.post("/api/volunteer-portal/set-password", volunteerAccountLimiter, async(req, res) => {
+    try {
+        const token = req.body.token;
+        const password = req.body.password;
+        if (typeof token !== "string" || !/^[a-f0-9]{64}$/i.test(token)) {
+            return res.status(400).json({ error: "This password link is invalid or expired. Request a new one." });
+        }
+        if (typeof password !== "string" || password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+            return res.status(400).json({ error: "Password must be at least 12 characters and no more than 72 UTF-8 bytes" });
+        }
+
+        const tokenHash = hashPasswordSetupToken(token);
+        const account = await VolunteerAccount.findOne({
+            status: "approved",
+            passwordSetupTokenHash: tokenHash,
+            passwordSetupExpiresAt: { $gt: new Date() },
+        }).select("_id");
+        if (!account) return res.status(400).json({ error: "This password link is invalid or expired. Request a new one." });
+
+        const passwordHash = await bcryptjs.hash(password, 12);
+        const updated = await VolunteerAccount.findOneAndUpdate(
+            {
+                _id: account._id,
+                status: "approved",
+                passwordSetupTokenHash: tokenHash,
+                passwordSetupExpiresAt: { $gt: new Date() },
+            },
+            {
+                $set: { passwordHash },
+                $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 },
+            },
+            { new: true }
+        ).select("_id");
+        if (!updated) return res.status(400).json({ error: "This password link has already been used or expired. Request a new one." });
+        res.json({ ok: true, message: "Password set. You can now sign in." });
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Volunteer password setup error:", err.message);
+        }
+        res.status(500).json({ error: "Could not set your password. Please try again." });
+    }
+});
+
+app.post("/api/volunteer-portal/login", volunteerAccountLimiter, async(req, res) => {
+    try {
+        const email = sanitizeInput(req.body.email).toLowerCase();
+        const password = req.body.password;
+        if (!email || typeof password !== "string") {
+            return res.status(400).json({ error: "Email and password are required" });
+        }
+
+        let account = await VolunteerAccount.findOne({ email }).select("+passwordHash");
+        if (!account) {
+            const application = await Volunteer.findOne({ email, status: "approved" }).select("+passwordHash");
+            if (application?.passwordHash) {
+                try {
+                    account = await VolunteerAccount.findOneAndUpdate(
+                        { email },
+                        {
+                            $setOnInsert: {
+                                _id: application._id,
+                                name: application.name,
+                                email: application.email,
+                                phone: application.phone,
+                                passwordHash: application.passwordHash,
+                                status: "approved",
+                            },
+                        },
+                        { new: true, upsert: true, setDefaultsOnInsert: true }
+                    ).select("+passwordHash");
+                } catch (provisionError) {
+                    if (provisionError.code !== 11000) throw provisionError;
+                    account = await VolunteerAccount.findOne({ email }).select("+passwordHash");
+                    if (!account) throw provisionError;
+                }
+
+                await Volunteer.updateOne(
+                    { _id: application._id },
+                    { $unset: { passwordHash: 1 } }
+                );
+            }
+        }
+        if (!account) {
+            return res.status(401).json({ error: "Invalid email or password" });
+        }
+        if (account.status !== "approved") {
+            return res.status(403).json({
+                error: account.status === "rejected"
+                    ? "This volunteer account has not been approved."
+                    : "Your account is awaiting admin approval.",
+            });
+        }
+        if (!account.passwordHash) {
+            return res.status(403).json({ error: "This account has no password set. Use Forgot your password to request a reset link." });
+        }
+        if (!(await bcryptjs.compare(password, account.passwordHash))) {
+            return res.status(401).json({ error: "Invalid email or password" });
+        }
+
+        const token = jwt.sign(
+            { role: "volunteer", volunteerId: account._id.toString() },
+            process.env.JWT_SECRET,
+            { expiresIn: "8h" }
+        );
+        res.json({ token, name: account.name });
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Volunteer portal login error:", err.message);
+        }
+        res.status(500).json({ error: "Sign in failed. Please try again." });
+    }
+});
+
+/* ==============================
    Admin Login
 ============================== */
 
@@ -471,18 +771,45 @@ app.post("/api/admin/login", loginLimiter, async (req, res) => {
    Admin Middleware
 ============================== */
 
-function verifyAdmin(req, res, next) {
+function getBearerToken(req) {
     const token = req.headers.authorization ? req.headers.authorization.split(" ")[1] : null;
+    return token || null;
+}
 
-    if (!token) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+function verifyAdmin(req, res, next) {
+    const token = getBearerToken(req);
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
 
     try {
-        jwt.verify(token, process.env.JWT_SECRET);
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        if (payload.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+        req.auth = payload;
         next();
     } catch (err) {
         res.status(401).json({ error: "Invalid token" });
+    }
+}
+
+async function verifyVolunteer(req, res, next) {
+    const token = getBearerToken(req);
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+    try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        if (payload.role !== "volunteer" || !mongoose.isValidObjectId(payload.volunteerId)) {
+            return res.status(403).json({ error: "Volunteer access required" });
+        }
+        const account = await VolunteerAccount.findOne({ _id: payload.volunteerId, status: "approved" }).select("_id");
+        if (!account) return res.status(403).json({ error: "Volunteer account is not active" });
+        req.volunteerId = account._id;
+        next();
+    } catch (err) {
+        if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+            return res.status(401).json({ error: "Invalid or expired token" });
+        }
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Volunteer authentication error:", err.message);
+        }
+        res.status(500).json({ error: "Authentication failed" });
     }
 }
 
@@ -574,35 +901,95 @@ app.patch("/api/admin/volunteers/:id", verifyAdmin, async(req, res) => {
             return res.status(400).json({ error: "Invalid status" });
         }
 
-        const updated = await Volunteer.findByIdAndUpdate(
-            req.params.id, { status }, { new: true }
+        const pendingApplication = await Volunteer.findOne({
+          _id: req.params.id,
+          status: "pending",
+        }).select("+passwordHash");
+        if (!pendingApplication) {
+          return res.status(404).json({ error: "Pending volunteer application not found" });
+        }
+
+        if (status === "rejected") {
+          const application = await Volunteer.findOneAndUpdate(
+              { _id: pendingApplication._id, status: "pending" },
+              { status },
+              { new: true, runValidators: true }
+            );
+          if (!application) {
+              return res.status(409).json({ error: "Volunteer application was already updated" });
+          }
+          await VolunteerAccount.updateOne(
+              { email: application.email, status: "pending" },
+              { status: "rejected" }
+          );
+          return res.json(application);
+        }
+
+        if (!pendingApplication.passwordHash) {
+          return res.status(400).json({
+              error: "This application has no password. Ask the applicant to submit a new application and choose a password before approval.",
+          });
+        }
+
+        const application = await Volunteer.findOneAndUpdate(
+          { _id: pendingApplication._id, status: "pending" },
+          { status: "approved" },
+          { new: true, runValidators: true }
         );
-
-        if (!updated) {
-            return res.status(404).json({ error: "Record not found" });
+        if (!application) {
+          return res.status(409).json({ error: "Volunteer application was already updated" });
+        }
+        try {
+          await VolunteerAccount.findOneAndUpdate(
+              { email: application.email },
+              {
+                  $set: {
+                      name: application.name,
+                      email: application.email,
+                      phone: application.phone,
+                      status: "approved",
+                      passwordHash: pendingApplication.passwordHash,
+                  },
+                  $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 },
+              },
+              { upsert: true, runValidators: true, setDefaultsOnInsert: true }
+          );
+        } catch (accountError) {
+          await Volunteer.updateOne(
+              { _id: application._id, status: "approved" },
+                { status: "pending" }
+            );
+            throw accountError;
         }
 
-        if (status === "approved" && updated.email) {
-            transporter
-                .sendMail({
-                    from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
-                    to: updated.email,
-                    subject: "🐾 Welcome to the Vanguard!",
-                    text: `Hello ${updated.name}, your volunteer application has been approved! We will be in touch shortly.`,
-                })
-                .catch((err) => {
-                    if (process.env.NODE_ENV !== "production") {
-                        console.error("Email notification error:", err.message);
-                    }
-                });
+        try {
+            await Volunteer.updateOne(
+                { _id: application._id },
+                { $unset: { passwordHash: 1 } }
+            );
+        } catch (cleanupError) {
+            console.error("Volunteer application password hash cleanup failed:", cleanupError.message);
         }
 
-        res.json(updated);
+        res.json(application);
+    } catch (err) {
+        console.error("Update volunteer error:", err.message);
+        res.status(500).json({ error: "Update failed" });
+    }
+});
+
+app.get("/api/admin/drive-puppies", verifyAdmin, async(req, res) => {
+    try {
+        const puppies = await Puppy.find()
+            .populate("volunteerId", "name email")
+            .sort({ createdAt: -1 })
+            .lean();
+        res.json(puppies);
     } catch (err) {
         if (process.env.NODE_ENV !== "production") {
-            console.error("Update volunteer error:", err.message);
+            console.error("Fetch drive puppy records error:", err.message);
         }
-        res.status(500).json({ error: "Update failed" });
+        res.status(500).json({ error: "Failed to fetch puppy records" });
     }
 });
 
@@ -636,6 +1023,166 @@ app.patch("/api/admin/adoption-interests/:id", verifyAdmin, async(req, res) => {
             console.error("Update adoption interest error:", err.message);
         }
         res.status(500).json({ error: "Failed to update enquiry" });
+    }
+});
+
+app.get("/api/volunteer-portal/puppies", verifyVolunteer, async(req, res) => {
+    try {
+        const puppies = await Puppy.find({ volunteerId: req.volunteerId })
+            .sort({ createdAt: -1 })
+            .lean();
+        res.json(puppies);
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Fetch volunteer puppy records error:", err.message);
+        }
+        res.status(500).json({ error: "Failed to fetch your puppy records" });
+    }
+});
+
+app.post("/api/volunteer-portal/puppies", verifyVolunteer, puppyPhotosUpload, async(req, res) => {
+    try {
+        const name = sanitizeInput(req.body.name);
+        const age = sanitizeInput(req.body.age);
+        const gender = req.body.gender;
+        const fosterName = sanitizeInput(req.body.fosterName);
+        const location = sanitizeInput(req.body.location);
+        const photos = (req.files || []).map((file) => ({ url: file.path, publicId: file.filename }));
+
+        const parseVaccinations = (input, label) => {
+            let dates;
+            try {
+                dates = JSON.parse(input || "[]");
+            } catch {
+                throw new Error(`${label} entries must be valid`);
+            }
+            if (!Array.isArray(dates) || dates.some((date) => typeof date !== "string" || !date)) {
+                throw new Error(`${label} entries must each have a date`);
+            }
+            for (const date of dates) {
+                const parsedDate = new Date(`${date}T00:00:00.000Z`);
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+                    Number.isNaN(parsedDate.getTime()) ||
+                    parsedDate.toISOString().slice(0, 10) !== date) {
+                    throw new Error(`Enter a valid date for each ${label} entry`);
+                }
+            }
+            return dates;
+        };
+        let dhppiVaccinations;
+        let antiRabiesVaccinations;
+        try {
+            dhppiVaccinations = parseVaccinations(req.body.dhppiVaccinations, "DHPPi");
+            antiRabiesVaccinations = parseVaccinations(req.body.antiRabiesVaccinations, "anti-rabies");
+        } catch (validationError) {
+            return res.status(400).json({ error: validationError.message });
+        }
+
+        if (!age || !fosterName || !location || !["female", "male", "unknown"].includes(gender)) {
+            return res.status(400).json({ error: "Age, gender, foster name, and location are required" });
+        }
+        if (!photos.length) return res.status(400).json({ error: "Upload at least one puppy photo" });
+        if (photos.length > 1) return res.status(400).json({ error: "Upload no more than one puppy photo" });
+        if (name.length > 80 || age.length > 40 || fosterName.length > 100 || location.length > 200) {
+            return res.status(400).json({ error: "One or more puppy details are too long" });
+        }
+
+        const year = new Date().getFullYear();
+        const counter = await Sequence.findOneAndUpdate(
+            { name: `puppy-tag-${year}` },
+            { $inc: { value: 1 } },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+        const tagNumber = `TOB-${year}-${String(counter.value).padStart(5, "0")}`;
+        const puppy = await Puppy.create({
+            tagNumber,
+            name,
+            age,
+            gender,
+            dhppiVaccinations,
+            antiRabiesVaccinations,
+            fosterName: fosterName.slice(0, 100),
+            location: location.slice(0, 200),
+            photos,
+            volunteerId: req.volunteerId,
+        });
+        res.status(201).json(puppy);
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Register puppy error:", err.message);
+        }
+        res.status(500).json({ error: "Failed to register puppy" });
+    }
+});
+
+app.patch("/api/volunteer-portal/puppies/:id/adoption", verifyVolunteer, async(req, res) => {
+    try {
+        const name = sanitizeInput(req.body.name);
+        const phone = sanitizeInput(req.body.phone);
+        const address = sanitizeInput(req.body.address);
+        if (!name || !phone || !address) {
+            return res.status(400).json({ error: "Adopter name, phone, and address are required" });
+        }
+        if (name.length > 100 || address.length > 500 || !isValidPhone(phone)) {
+            return res.status(400).json({ error: "Check the adopter details and phone number" });
+        }
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({ error: "Invalid puppy ID" });
+        }
+
+        const puppy = await Puppy.findOneAndUpdate(
+            { _id: req.params.id, volunteerId: req.volunteerId, status: "available" },
+            {
+                status: "adopted",
+                adoption: {
+                    name: name.slice(0, 100),
+                    phone: phone.slice(0, 20),
+                    address: address.slice(0, 500),
+                    publicNameConsent: req.body.publicNameConsent === true,
+                    adoptedAt: new Date(),
+                },
+            },
+            { new: true, runValidators: true }
+        );
+        if (!puppy) return res.status(404).json({ error: "Available puppy record not found" });
+        res.json(puppy);
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Record puppy adoption error:", err.message);
+        }
+        res.status(500).json({ error: "Failed to record adoption" });
+    }
+});
+
+app.get("/api/drive/puppies", async(req, res) => {
+    try {
+        const [available, adopted, puppies] = await Promise.all([
+            Puppy.countDocuments({ status: "available" }),
+            Puppy.countDocuments({ status: "adopted" }),
+            Puppy.find()
+                .select("name photos status adoption.name adoption.publicNameConsent")
+                .sort({ updatedAt: -1 })
+                .limit(100)
+                .lean(),
+        ]);
+        res.set("Cache-Control", "no-store");
+        res.json({
+            available,
+            adopted,
+            puppies: puppies.map((puppy) => ({
+                name: puppy.name || "",
+                photo: puppy.photos?.[0]?.url || "",
+                status: puppy.status,
+                adopterFirstName: puppy.adoption?.publicNameConsent
+                    ? String(puppy.adoption.name || "").trim().split(/\s+/)[0]
+                    : "",
+            })),
+        });
+    } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+            console.error("Fetch public drive puppy dashboard error:", err.message);
+        }
+        res.status(500).json({ error: "Live puppy dashboard is temporarily unavailable" });
     }
 });
 
@@ -705,6 +1252,9 @@ app.get("/api/adopted-puppies", async(req, res) => {
     }
 });
 
+app.use("/api", (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.path}` });
+});
 
 /* ==============================
    Start Server (Vercel Secure)

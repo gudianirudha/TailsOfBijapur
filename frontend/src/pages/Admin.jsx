@@ -2,10 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Check, X, PawPrint, Users, ShieldAlert, Phone, Mail } from "lucide-react";
 
+function formatVaccinationDate(date) {
+  if (!date) return "";
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 export default function Admin() {
   const [adoptions, setAdoptions] = useState([]);
   const [adoptionInterests, setAdoptionInterests] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
+  const [drivePuppies, setDrivePuppies] = useState([]);
+  const [driveDataError, setDriveDataError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,6 +25,7 @@ export default function Admin() {
     fetchAdoptions(token);
     fetchAdoptionInterests(token);
     fetchVolunteers(token);
+    fetchDrivePuppies(token);
   }, [navigate]);
 
   // ================= FETCH LOGIC =================
@@ -77,6 +86,23 @@ export default function Admin() {
     }
   }
 
+  async function fetchDrivePuppies(token) {
+    try {
+      const res = await fetch("/api/admin/drive-puppies", {
+        headers: { Authorization: "Bearer " + token },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch drive puppy records.");
+      setDrivePuppies(await res.json());
+    } catch (err) {
+      setDriveDataError(err.message);
+    }
+  }
+
   // ================= UPDATE LOGIC =================
   async function updateAdoption(id, status) {
     const token = sessionStorage.getItem("adminToken");
@@ -117,7 +143,8 @@ export default function Admin() {
       });
 
       if (!res.ok) {
-        alert("Failed to update volunteer status");
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to update volunteer status");
         return;
       }
       setVolunteers((prev) => prev.filter((item) => item._id !== id));
@@ -327,7 +354,10 @@ export default function Admin() {
             <div className="bg-orange-600/20 p-3 rounded-xl text-orange-500">
               <Users size={24} />
             </div>
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Volunteer Recruits</h2>
+            <div>
+              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Volunteer Applications</h2>
+              <p className="mt-2 text-sm text-gray-500">Applicants create a password when they apply. Approval activates their portal account.</p>
+            </div>
           </div>
 
           {volunteers.length === 0 ? (
@@ -364,7 +394,7 @@ export default function Admin() {
                   {/* Action Buttons */}
                   <div className="flex sm:flex-col gap-3 w-full sm:w-auto shrink-0">
                     <button onClick={() => updateVolunteer(item._id, "approved")} className="flex-1 flex items-center justify-center gap-2 bg-green-500/10 hover:bg-green-500 text-green-500 hover:text-white border border-green-500/20 px-6 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
-                      <Check size={16} /> Authorize
+                      <Check size={16} /> Approve &amp; Activate Portal
                     </button>
                     <button onClick={() => updateVolunteer(item._id, "rejected")} className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 px-6 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
                       <X size={16} /> Deny
@@ -372,6 +402,57 @@ export default function Admin() {
                   </div>
 
                 </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-10 flex items-center gap-4">
+            <div className="rounded-xl bg-orange-600/20 p-3 text-orange-500"><PawPrint size={24} /></div>
+            <div>
+              <h2 className="text-4xl font-black uppercase tracking-tighter md:text-5xl">Drive puppies</h2>
+              <p className="mt-1 text-sm text-gray-500">Internal intake and adopter records.</p>
+            </div>
+          </div>
+          {drivePuppies.length === 0 ? (
+            <div className="rounded-[2rem] border border-dashed border-white/10 bg-[#111] p-10 text-center text-gray-500">No puppies have been registered for the drive yet.</div>
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-2">
+              {drivePuppies.map((item) => (
+                <article key={item._id} className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#111]">
+                  {item.photos?.[0] && <img src={item.photos[0].url} alt={item.name || `Puppy ${item.tagNumber}`} className="h-56 w-full object-cover" />}
+                  <div className="space-y-3 p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div><p className="text-xs font-black uppercase tracking-widest text-orange-500">{item.tagNumber}</p><h3 className="mt-1 text-2xl font-black text-white">{item.name || "Unnamed puppy"}</h3></div>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase text-gray-300">{item.status}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-400">
+                      <p><span className="font-bold text-gray-300">Age:</span> {item.age}</p>
+                      <p><span className="font-bold text-gray-300">Gender:</span> {item.gender}</p>
+                      <p className="col-span-2"><span className="font-bold text-gray-300">DHPPi doses:</span> {item.dhppiVaccinations?.length
+                        ? item.dhppiVaccinations.map(formatVaccinationDate).join(", ")
+                        : item.dhppiDoseCount != null
+                          ? `${item.dhppiDoseCount} dose(s) recorded; dates unavailable`
+                          : "Not recorded"}</p>
+                      <p className="col-span-2"><span className="font-bold text-gray-300">Anti-rabies dates:</span> {item.antiRabiesVaccinations?.length
+                        ? item.antiRabiesVaccinations.map(formatVaccinationDate).join(", ")
+                        : item.antiRabiesDate || "Not recorded"}</p>
+                      <p><span className="font-bold text-gray-300">Foster:</span> {item.fosterName || "Not recorded"}</p>
+                      <p><span className="font-bold text-gray-300">Location:</span> {item.location || item.rescueLocation || "Not recorded"}</p>
+                      {item.vaccination && <p className="col-span-2"><span className="font-bold text-gray-300">Previous vaccination notes:</span> {item.vaccination}</p>}
+                    </div>
+                    <p className="text-xs text-gray-500">Registered by {item.volunteerId?.name || "Unknown volunteer"} ({item.volunteerId?.email || "no email"})</p>
+                    {item.status === "adopted" && (
+                      <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-sm leading-6 text-gray-300">
+                        <p className="font-bold text-green-400">Adopter: {item.adoption?.name}</p>
+                        <p>{item.adoption?.phone}</p>
+                        <p>{item.adoption?.address}</p>
+                        <p className="text-xs text-gray-500">{item.adoption?.adoptedAt ? new Date(item.adoption.adoptedAt).toLocaleString() : ""}</p>
+                      </div>
+                    )}
+                  </div>
+                </article>
               ))}
             </div>
           )}
