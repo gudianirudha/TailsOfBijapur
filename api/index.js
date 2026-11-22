@@ -519,7 +519,7 @@ function escapeHtml(value) {
 
 async function sendVolunteerPasswordSetupEmail(req, account, token) {
     const setupUrl = `${getFrontendBaseUrl(req)}/volunteer-portal?setupToken=${encodeURIComponent(token)}`;
-    await transporter.sendMail({
+    const result = await transporter.sendMail({
         from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
         to: account.email,
         subject: "Set up your Tails of Bijapur volunteer portal password",
@@ -532,6 +532,24 @@ async function sendVolunteerPasswordSetupEmail(req, account, token) {
             "This link expires in 24 hours. If you did not request this, you can ignore this email.",
         ].join("\n"),
         html: `<p>Hello ${escapeHtml(account.name)},</p><p>Your volunteer portal access is approved. Set your password using the one-time link below. It expires in 24 hours.</p><p><a href="${setupUrl}">Set your volunteer portal password</a></p><p>If you did not request this, you can ignore this email.</p>`,
+    });
+
+    const acceptedRecipient = result.accepted.some(
+        (recipient) => recipient.toLowerCase() === account.email.toLowerCase()
+    );
+    if (!acceptedRecipient) {
+        console.error("SMTP did not accept the volunteer password setup recipient", {
+            messageId: result.messageId,
+            acceptedCount: result.accepted.length,
+            rejectedCount: result.rejected.length,
+            response: result.response,
+        });
+        throw new Error("The email provider did not accept the password setup recipient");
+    }
+
+    console.info("SMTP accepted the volunteer password setup email", {
+        messageId: result.messageId,
+        response: result.response,
     });
 }
 
@@ -560,9 +578,7 @@ app.post("/api/volunteer-portal/password-link", volunteerAccountLimiter, async(r
         }
         res.json({ ok: true, message: "If this email belongs to an approved volunteer, a password setup link has been sent. Check your inbox and spam folder." });
     } catch (err) {
-        if (process.env.NODE_ENV !== "production") {
-            console.error("Volunteer password link error:", err.message);
-        }
+        console.error("Volunteer password link error:", err.message);
         res.status(502).json({ error: "We couldn’t send the password link. Please contact the admin." });
     }
 });
