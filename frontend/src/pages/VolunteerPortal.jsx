@@ -38,6 +38,7 @@ export default function VolunteerPortal() {
   const [puppy, setPuppy] = useState(EMPTY_PUPPY);
   const [photos, setPhotos] = useState([]);
   const [puppies, setPuppies] = useState([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [healthCardPuppy, setHealthCardPuppy] = useState(null);
   const [token, setToken] = useState(() => sessionStorage.getItem("volunteerToken") || "");
   const [busy, setBusy] = useState(false);
@@ -73,7 +74,12 @@ export default function VolunteerPortal() {
       throw new Error("Your portal session is no longer active. Please sign in again.");
     }
     if (!response.ok) throw new Error("Could not load puppy records.");
-    setPuppies(await response.json());
+    const data = await response.json();
+    if (!Array.isArray(data.puppies) || typeof data.isSuperAdmin !== "boolean") {
+      throw new Error("Could not load puppy records.");
+    }
+    setPuppies(data.puppies);
+    setIsSuperAdmin(data.isSuperAdmin);
   }, []);
 
   useEffect(() => {
@@ -182,6 +188,7 @@ export default function VolunteerPortal() {
     sessionStorage.removeItem("volunteerToken");
     setToken("");
     setPuppies([]);
+    setIsSuperAdmin(false);
     setMessage({ type: "", text: "" });
   }
 
@@ -269,7 +276,9 @@ export default function VolunteerPortal() {
                 <PawPrint size={13} /> Volunteer workspace
               </p>
               <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Puppy intake & adoption</h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-orange-50/80 sm:text-base">Every record helps a rescued puppy find a safer, healthier next chapter.</p>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-orange-50/80 sm:text-base">{isSuperAdmin
+                ? "Super admin view · manage every registered puppy and adoption record."
+                : "Every record helps a rescued puppy find a safer, healthier next chapter."}</p>
             </div>
             <button onClick={logout} className="relative inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/20">
             <LogOut size={16} /> Sign out
@@ -407,7 +416,7 @@ export default function VolunteerPortal() {
 
         <section className="mt-12">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-800">Intake & adoption</p><h2 className="mt-1 text-2xl font-black sm:text-3xl">Your puppy records</h2><p className="mt-1 text-sm text-stone-600">Track each rescue from intake through adoption.</p></div>
+            <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-800">{isSuperAdmin ? "Super admin" : "Intake & adoption"}</p><h2 className="mt-1 text-2xl font-black sm:text-3xl">{isSuperAdmin ? "All puppy records" : "Your puppy records"}</h2><p className="mt-1 text-sm text-stone-600">{isSuperAdmin ? "Review all volunteer registrations, record adoptions, and download health cards." : "Track each rescue from intake through adoption."}</p></div>
             <span className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm font-bold text-stone-600 shadow-sm">{puppies.length} {puppies.length === 1 ? "record" : "records"}</span>
           </div>
           {puppies.length === 0 ? (
