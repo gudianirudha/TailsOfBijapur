@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowRight, Camera, Check, LogOut, PawPrint, Upload } from "lucide-react";
 
 const EMPTY_PUPPY = {
@@ -27,7 +27,7 @@ export default function VolunteerPortal() {
   const [searchParams, setSearchParams] = useSearchParams();
   const setupToken = searchParams.get("setupToken") || "";
   const [mode, setMode] = useState(setupToken ? "setup" : "login");
-  const [credentials, setCredentials] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
+  const [credentials, setCredentials] = useState({ email: "", password: "", confirmPassword: "" });
   const [puppy, setPuppy] = useState(EMPTY_PUPPY);
   const [photos, setPhotos] = useState([]);
   const [puppies, setPuppies] = useState([]);
@@ -61,12 +61,10 @@ export default function VolunteerPortal() {
     setBusy(true);
     setMessage({ type: "", text: "" });
     try {
-      const registering = mode === "register";
       if (mode === "setup" && credentials.password !== credentials.confirmPassword) {
         throw new Error("Passwords do not match.");
       }
       const endpoint = {
-        register: "/api/volunteer-portal/register",
         login: "/api/volunteer-portal/login",
         forgot: "/api/volunteer-portal/password-link",
         setup: "/api/volunteer-portal/set-password",
@@ -75,7 +73,7 @@ export default function VolunteerPortal() {
         ? { token: setupToken, password: credentials.password }
         : mode === "forgot"
           ? { email: credentials.email }
-          : credentials;
+          : { email: credentials.email, password: credentials.password };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -83,10 +81,7 @@ export default function VolunteerPortal() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not complete the request.");
-      if (registering) {
-        setMode("login");
-        setMessage({ type: data.notificationSent === false ? "warning" : "success", text: data.message });
-      } else if (mode === "forgot") {
+      if (mode === "forgot") {
         setMessage({ type: "success", text: data.message });
       } else if (mode === "setup") {
         setSearchParams({});
@@ -163,16 +158,13 @@ export default function VolunteerPortal() {
   }
 
   if (!token) {
-    const registering = mode === "register";
     const settingPassword = mode === "setup";
     const requestingPasswordLink = mode === "forgot";
-    const title = registering
-      ? "Volunteer registration"
-      : settingPassword
-        ? "Set your password"
-        : requestingPasswordLink
-          ? "Password setup link"
-          : "Volunteer portal";
+    const title = settingPassword
+      ? "Set your password"
+      : requestingPasswordLink
+        ? "Password setup link"
+        : "Volunteer portal";
     return (
       <main className="min-h-screen bg-[#f1ece2] px-4 py-16 text-stone-900">
         <div className="mx-auto max-w-lg rounded-3xl border border-stone-200 bg-white p-7 shadow-xl sm:p-10">
@@ -182,25 +174,13 @@ export default function VolunteerPortal() {
           </div>
           <h1 className="text-3xl font-black tracking-tight">{title}</h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            {registering
-              ? "Request access with your contact details. If approved, you’ll receive an email link to set your password."
-              : settingPassword
-                ? "Choose a password for your approved volunteer account. This setup link expires after 24 hours."
-                : requestingPasswordLink
-                  ? "Enter the email you registered with. If your account is approved, we’ll send a password setup link."
-                  : "Sign in to register puppies and keep their adoption records up to date."}
+            {settingPassword
+              ? "Choose a password for your approved volunteer account. This setup link expires after 24 hours."
+              : requestingPasswordLink
+                ? "Enter the email you registered with. If your account is approved, we’ll send a password setup link."
+                : "Sign in to register puppies and keep their adoption records up to date. New volunteers should apply on the Volunteer page; approved applicants receive a password setup link by email."}
           </p>
           <form onSubmit={submitAccount} className="mt-7 space-y-4">
-            {registering && (
-              <>
-                <Field label="Full name">
-                  <input className={inputClass} autoComplete="name" maxLength={80} required value={credentials.name} onChange={(event) => setCredentials({ ...credentials, name: event.target.value })} />
-                </Field>
-                <Field label="Phone number">
-                  <input className={inputClass} autoComplete="tel" inputMode="tel" maxLength={20} required value={credentials.phone} onChange={(event) => setCredentials({ ...credentials, phone: event.target.value })} />
-                </Field>
-              </>
-            )}
             {mode !== "setup" && (
               <Field label="Email">
                 <input className={inputClass} type="email" autoComplete="email" maxLength={254} required value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} />
@@ -217,10 +197,10 @@ export default function VolunteerPortal() {
               </Field>
             )}
             {message.text && (
-              <p className={`rounded-xl p-3 text-sm ${message.type === "error" ? "bg-red-50 text-red-800" : message.type === "warning" ? "bg-amber-50 text-amber-900" : "bg-green-50 text-green-800"}`} role="status">{message.text}</p>
+              <p className={`rounded-xl p-3 text-sm ${message.type === "error" ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`} role="status">{message.text}</p>
             )}
             <button type="submit" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-3.5 font-bold text-white transition hover:bg-orange-700 disabled:opacity-60">
-              {busy ? "Please wait…" : registering ? "Request access" : settingPassword ? "Set password" : requestingPasswordLink ? "Send setup link" : "Sign in"} <ArrowRight size={17} />
+              {busy ? "Please wait…" : settingPassword ? "Set password" : requestingPasswordLink ? "Send setup link" : "Sign in"} <ArrowRight size={17} />
             </button>
           </form>
           {!settingPassword && (
@@ -235,15 +215,10 @@ export default function VolunteerPortal() {
                   <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("forgot"); setMessage({ type: "", text: "" }); }}>
                     Approved but need to set/reset your password?
                   </button>
-                  <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("register"); setMessage({ type: "", text: "" }); }}>
-                    New volunteer? Request access
-                  </button>
+                  <Link to="/volunteer" className="text-orange-800 underline underline-offset-4">
+                    New volunteer? Apply here
+                  </Link>
                 </>
-              )}
-              {mode === "register" && (
-                <button type="button" className="text-orange-800 underline underline-offset-4" onClick={() => { setMode("login"); setMessage({ type: "", text: "" }); }}>
-                  Already registered? Sign in
-                </button>
               )}
             </div>
           )}

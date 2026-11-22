@@ -26,17 +26,14 @@ export default function Volunteer() {
         body: JSON.stringify(form),
       });
       
-      if (res.ok) {
-        setStatus("success");
-        setMsg("Application secured. Welcome to the Vanguard.");
-        setForm({ name: "", email: "", phone: "", role: "student", time: "weekends", why: "" });
-      } else {
-        setStatus("error");
-        setMsg("Transmission failed. Please try again.");
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not submit your application. Please try again.");
+      setStatus("success");
+      setMsg("Application submitted. If approved, you’ll receive an email with a secure link to set your volunteer portal password.");
+      setForm({ name: "", email: "", phone: "", role: "student", time: "weekends", why: "" });
     } catch (err) {
       setStatus("error");
-      setMsg("Network error. Please try again.");
+      setMsg(err.message || "Network error. Please try again.");
     }
   }
 
@@ -113,17 +110,17 @@ export default function Volunteer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Full Name</label>
-                    <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="Jane Doe" />
+                    <input required maxLength={80} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="Jane Doe" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Phone Number</label>
-                    <input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="+91" />
+                    <input required maxLength={20} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="+91" />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Email Address</label>
-                  <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="jane@example.com" />
+                  <input required type="email" maxLength={254} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full bg-[#151515] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 transition-colors font-medium" placeholder="jane@example.com" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

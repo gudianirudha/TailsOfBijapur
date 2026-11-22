@@ -333,10 +333,17 @@ app.post("/api/volunteer", async(req, res) => {
             return res.status(400).json({ error: "Invalid phone format" });
         }
 
+        const cleanName = sanitizeInput(name);
+        const cleanEmail = sanitizeInput(email).toLowerCase();
+        const cleanPhone = sanitizeInput(phone);
+        if (cleanName.length > 80 || cleanEmail.length > 254 || cleanPhone.length > 20) {
+            return res.status(400).json({ error: "Name, email, or phone number exceeds the allowed length" });
+        }
+
         const submission = await Volunteer.create({
-            name: sanitizeInput(name),
-            email: sanitizeInput(email).toLowerCase(),
-            phone: sanitizeInput(phone),
+            name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
             role: sanitizeInput(role),
             time: sanitizeInput(time),
             why: sanitizeInput(why),
@@ -527,68 +534,6 @@ async function sendVolunteerPasswordSetupEmail(req, account, token) {
         html: `<p>Hello ${escapeHtml(account.name)},</p><p>Your volunteer portal access is approved. Set your password using the one-time link below. It expires in 24 hours.</p><p><a href="${setupUrl}">Set your volunteer portal password</a></p><p>If you did not request this, you can ignore this email.</p>`,
     });
 }
-
-async function sendVolunteerAccessRequestEmail(req, account) {
-    const adminUrl = `${getFrontendBaseUrl(req)}/admin`;
-    await transporter.sendMail({
-        from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
-        to: process.env.ADMIN_EMAIL,
-        subject: `New volunteer portal access request - ${account.name}`,
-        text: [
-            "A volunteer has requested access to the puppy intake portal.",
-            "",
-            `Name: ${account.name}`,
-            `Email: ${account.email}`,
-            `Phone: ${account.phone}`,
-            `Status: ${account.status}`,
-            "",
-            `Review this request in the admin portal: ${adminUrl}`,
-        ].join("\n"),
-        html: `<p>A volunteer has requested access to the puppy intake portal.</p><ul><li><strong>Name:</strong> ${escapeHtml(account.name)}</li><li><strong>Email:</strong> ${escapeHtml(account.email)}</li><li><strong>Phone:</strong> ${escapeHtml(account.phone)}</li><li><strong>Status:</strong> ${escapeHtml(account.status)}</li></ul><p><a href="${adminUrl}">Review this request in the admin portal</a></p>`,
-    });
-}
-
-app.post("/api/volunteer-portal/register", volunteerAccountLimiter, async(req, res) => {
-    try {
-        const name = sanitizeInput(req.body.name);
-        const email = sanitizeInput(req.body.email).toLowerCase();
-        const phone = sanitizeInput(req.body.phone);
-
-        if (!name || !email || !phone) {
-            return res.status(400).json({ error: "Name, email, and phone are required" });
-        }
-        if (!isValidEmail(email)) return res.status(400).json({ error: "Invalid email format" });
-        if (!isValidPhone(phone)) return res.status(400).json({ error: "Invalid phone format" });
-
-        const account = await VolunteerAccount.create({
-            name: name.slice(0, 80),
-            email,
-            phone: phone.slice(0, 20),
-        });
-        let notificationSent = true;
-        try {
-            await sendVolunteerAccessRequestEmail(req, account);
-        } catch (emailError) {
-            notificationSent = false;
-            if (process.env.NODE_ENV !== "production") {
-                console.error("Volunteer portal request notification failed:", emailError.message);
-            }
-        }
-        res.status(201).json({
-            ok: true,
-            notificationSent,
-            message: notificationSent
-                ? "Access request submitted and the admin has been notified. Once approved, you’ll receive an email link to set your password."
-                : "Access request is saved, but the admin notification email could not be sent. Please contact the admin; your request is still visible under Portal access requests.",
-        });
-    } catch (err) {
-        if (err.code === 11000) return res.status(409).json({ error: "An account with this email already exists" });
-        if (process.env.NODE_ENV !== "production") {
-            console.error("Volunteer account registration error:", err.message);
-        }
-        res.status(500).json({ error: "Registration failed. Please try again." });
-    }
-});
 
 app.post("/api/volunteer-portal/password-link", volunteerAccountLimiter, async(req, res) => {
     try {
@@ -873,116 +818,84 @@ app.patch("/api/admin/volunteers/:id", verifyAdmin, async(req, res) => {
             return res.status(400).json({ error: "Invalid status" });
         }
 
-        const updated = await Volunteer.findByIdAndUpdate(
-            req.params.id, { status }, { new: true }
-        );
-
-        if (!updated) {
-            return res.status(404).json({ error: "Record not found" });
-        }
-
-        if (status === "approved" && updated.email) {
-            transporter
-                .sendMail({
-                    from: `"Tails of Bijapur" <${process.env.SMTP_USER}>`,
-                    to: updated.email,
-                    subject: "🐾 Welcome to the Vanguard!",
-                    text: `Hello ${updated.name}, your volunteer application has been approved! We will be in touch shortly.`,
-                })
-                .catch((err) => {
-                    if (process.env.NODE_ENV !== "production") {
-                        console.error("Email notification error:", err.message);
-                    }
-                });
-        }
-
-        res.json(updated);
-    } catch (err) {
-        if (process.env.NODE_ENV !== "production") {
-            console.error("Update volunteer error:", err.message);
-        }
-        res.status(500).json({ error: "Update failed" });
-    }
-});
-
-app.get("/api/admin/volunteer-accounts", verifyAdmin, async(req, res) => {
-    try {
-        const status = ["pending", "approved", "rejected"].includes(req.query.status)
-            ? req.query.status
-            : "pending";
-        const accounts = await VolunteerAccount.find({ status })
-            .select("name email phone status createdAt")
-            .sort({ createdAt: -1 })
-            .lean();
-        res.json(accounts);
-    } catch (err) {
-        if (process.env.NODE_ENV !== "production") {
-            console.error("Fetch volunteer portal accounts error:", err.message);
-        }
-        res.status(500).json({ error: "Failed to fetch volunteer accounts" });
-    }
-});
-
-app.patch("/api/admin/volunteer-accounts/:id", verifyAdmin, async(req, res) => {
-    try {
-        const { status } = req.body;
-        if (!["approved", "rejected"].includes(status)) {
-            return res.status(400).json({ error: "Invalid account status" });
-        }
-        if (!mongoose.isValidObjectId(req.params.id)) {
-            return res.status(400).json({ error: "Invalid account ID" });
-        }
-        const account = await VolunteerAccount.findOne(
+        const application = await Volunteer.findOneAndUpdate(
             { _id: req.params.id, status: "pending" },
-        ).select("name email phone status");
-        if (!account) return res.status(404).json({ error: "Pending volunteer account not found" });
+            { status },
+            { new: true, runValidators: true }
+        );
+        if (!application) {
+            return res.status(404).json({ error: "Pending volunteer application not found" });
+        }
 
         if (status === "rejected") {
-            const rejected = await VolunteerAccount.findOneAndUpdate(
-                { _id: account._id, status: "pending" },
-                { status: "rejected" },
-                { new: true, runValidators: true }
-            ).select("name email phone status createdAt");
-            if (!rejected) return res.status(409).json({ error: "Volunteer account was already updated" });
-            return res.json(rejected);
+            await VolunteerAccount.updateOne(
+                { email: application.email, status: "pending" },
+                { status: "rejected" }
+            );
+            return res.json(application);
         }
 
         const setupToken = randomBytes(32).toString("hex");
         const setupTokenHash = hashPasswordSetupToken(setupToken);
-        const approved = await VolunteerAccount.findOneAndUpdate(
-            { _id: account._id, status: "pending" },
-            {
-                status: "approved",
-                passwordSetupTokenHash: setupTokenHash,
-                passwordSetupExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            },
-            { new: true, runValidators: true }
-        ).select("name email phone status createdAt");
-        if (!approved) return res.status(409).json({ error: "Volunteer account was already updated" });
+        let previousAccount;
+        let account;
 
         try {
-            await sendVolunteerPasswordSetupEmail(req, approved, setupToken);
-        } catch (emailError) {
-            await VolunteerAccount.updateOne(
-                { _id: approved._id, status: "approved", passwordSetupTokenHash: setupTokenHash },
+            previousAccount = await VolunteerAccount.findOne({ email: application.email }).select("_id status");
+            account = await VolunteerAccount.findOneAndUpdate(
+                { email: application.email },
                 {
-                    $set: { status: "pending" },
-                    $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 },
-                }
+                    $set: {
+                        name: application.name,
+                        email: application.email,
+                        phone: application.phone,
+                        status: "approved",
+                        passwordSetupTokenHash: setupTokenHash,
+                        passwordSetupExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                    },
+                },
+                { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+            ).select("name email phone status createdAt");
+        } catch (accountError) {
+            await Volunteer.updateOne(
+                { _id: application._id, status: "approved" },
+                { status: "pending" }
             );
-            if (process.env.NODE_ENV !== "production") {
-                console.error("Volunteer account approval email failed:", emailError.message);
+            throw accountError;
+        }
+
+        try {
+            await sendVolunteerPasswordSetupEmail(req, account, setupToken);
+        } catch (emailError) {
+            try {
+                if (previousAccount) {
+                    await VolunteerAccount.updateOne(
+                        { _id: previousAccount._id, passwordSetupTokenHash: setupTokenHash },
+                        {
+                            $set: { status: previousAccount.status },
+                            $unset: { passwordSetupTokenHash: 1, passwordSetupExpiresAt: 1 },
+                        }
+                    );
+                } else {
+                    await VolunteerAccount.deleteOne({ _id: account._id, passwordSetupTokenHash: setupTokenHash });
+                }
+                await Volunteer.updateOne(
+                    { _id: application._id, status: "approved" },
+                    { status: "pending" }
+                );
+            } catch (rollbackError) {
+                console.error("Volunteer approval rollback failed:", rollbackError.message);
             }
+            console.error("Volunteer password setup email failed:", emailError.message);
             return res.status(502).json({
-                error: "Approval was not completed because the password setup email could not be sent. Check the email configuration and try again.",
+                error: "Approval was not completed because the password setup email could not be sent. Please check the email configuration and try again.",
             });
         }
-        res.json(approved);
+
+        res.json(application);
     } catch (err) {
-        if (process.env.NODE_ENV !== "production") {
-            console.error("Update volunteer portal account error:", err.message);
-        }
-        res.status(500).json({ error: "Failed to update volunteer account" });
+        console.error("Update volunteer error:", err.message);
+        res.status(500).json({ error: "Update failed" });
     }
 });
 

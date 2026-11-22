@@ -6,7 +6,6 @@ export default function Admin() {
   const [adoptions, setAdoptions] = useState([]);
   const [adoptionInterests, setAdoptionInterests] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
-  const [portalAccounts, setPortalAccounts] = useState([]);
   const [drivePuppies, setDrivePuppies] = useState([]);
   const [driveDataError, setDriveDataError] = useState("");
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ export default function Admin() {
     fetchAdoptions(token);
     fetchAdoptionInterests(token);
     fetchVolunteers(token);
-    fetchPortalAccounts(token);
     fetchDrivePuppies(token);
   }, [navigate]);
 
@@ -82,23 +80,6 @@ export default function Admin() {
     }
   }
 
-  async function fetchPortalAccounts(token) {
-    try {
-      const res = await fetch("/api/admin/volunteer-accounts?status=pending", {
-        headers: { Authorization: "Bearer " + token },
-        credentials: "include",
-      });
-      if (res.status === 401) {
-        logout();
-        return;
-      }
-      if (!res.ok) throw new Error("Failed to fetch volunteer account requests.");
-      setPortalAccounts(await res.json());
-    } catch (err) {
-      setDriveDataError(err.message);
-    }
-  }
-
   async function fetchDrivePuppies(token) {
     try {
       const res = await fetch("/api/admin/drive-puppies", {
@@ -156,7 +137,8 @@ export default function Admin() {
       });
 
       if (!res.ok) {
-        alert("Failed to update volunteer status");
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to update volunteer status");
         return;
       }
       setVolunteers((prev) => prev.filter((item) => item._id !== id));
@@ -164,29 +146,6 @@ export default function Admin() {
       if (process.env.NODE_ENV !== "production") {
         console.error("Update volunteer error");
       }
-    }
-  }
-
-  async function updatePortalAccount(id, status) {
-    const token = sessionStorage.getItem("adminToken");
-    try {
-      const res = await fetch(`/api/admin/volunteer-accounts/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-        credentials: "include",
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error || "Failed to update volunteer portal access");
-        return;
-      }
-      setPortalAccounts((prev) => prev.filter((item) => item._id !== id));
-    } catch (err) {
-      alert("Could not update volunteer portal access. Please try again.");
     }
   }
 
@@ -389,7 +348,10 @@ export default function Admin() {
             <div className="bg-orange-600/20 p-3 rounded-xl text-orange-500">
               <Users size={24} />
             </div>
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Volunteer Recruits</h2>
+            <div>
+              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Volunteer Applications</h2>
+              <p className="mt-2 text-sm text-gray-500">Approve an application to email the volunteer a secure link to set their portal password.</p>
+            </div>
           </div>
 
           {volunteers.length === 0 ? (
@@ -426,7 +388,7 @@ export default function Admin() {
                   {/* Action Buttons */}
                   <div className="flex sm:flex-col gap-3 w-full sm:w-auto shrink-0">
                     <button onClick={() => updateVolunteer(item._id, "approved")} className="flex-1 flex items-center justify-center gap-2 bg-green-500/10 hover:bg-green-500 text-green-500 hover:text-white border border-green-500/20 px-6 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
-                      <Check size={16} /> Authorize
+                      <Check size={16} /> Approve &amp; Email Setup Link
                     </button>
                     <button onClick={() => updateVolunteer(item._id, "rejected")} className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 px-6 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
                       <X size={16} /> Deny
@@ -434,45 +396,6 @@ export default function Admin() {
                   </div>
 
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section>
-          <div className="mb-10 flex items-center gap-4">
-            <div className="rounded-xl bg-orange-600/20 p-3 text-orange-500"><Users size={24} /></div>
-            <div>
-              <h2 className="text-4xl font-black uppercase tracking-tighter md:text-5xl">Portal access requests</h2>
-              <p className="mt-1 text-sm text-gray-500">Approval emails a one-time link for the volunteer to create their password.</p>
-            </div>
-          </div>
-          {driveDataError && (
-            <p className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300" role="alert">
-              {driveDataError}
-            </p>
-          )}
-          {portalAccounts.length === 0 ? (
-            <div className="rounded-[2rem] border border-dashed border-white/10 bg-[#111] p-10 text-center text-gray-500">No pending portal access requests.</div>
-          ) : (
-            <div className="grid gap-5 lg:grid-cols-2">
-              {portalAccounts.map((item) => (
-                <article key={item._id} className="flex flex-col justify-between gap-5 rounded-[2rem] border border-white/10 bg-[#111] p-7 sm:flex-row sm:items-center">
-                  <div>
-                    <h3 className="text-2xl font-black text-white">{item.name}</h3>
-                    <p className="mt-2 flex items-center gap-2 text-sm text-gray-400"><Mail size={15} />{item.email}</p>
-                    <p className="mt-1 flex items-center gap-2 text-sm text-gray-400"><Phone size={15} />{item.phone}</p>
-                    <p className="mt-2 text-xs text-gray-600">Requested {new Date(item.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={() => updatePortalAccount(item._id, "approved")} className="flex items-center gap-2 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-xs font-black uppercase tracking-widest text-green-500 hover:bg-green-500 hover:text-white">
-                      <Check size={15} /> Approve
-                    </button>
-                    <button onClick={() => updatePortalAccount(item._id, "rejected")} className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-500 hover:text-white">
-                      <X size={15} /> Reject
-                    </button>
-                  </div>
-                </article>
               ))}
             </div>
           )}
