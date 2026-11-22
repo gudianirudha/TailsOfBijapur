@@ -9,26 +9,31 @@ import {
   Camera,
   CalendarDays,
   CheckCircle2,
-  Clock3,
   Heart,
   HeartHandshake,
-  MapPin,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import "./AdoptionDrive.css";
 
-const DRIVE_DATE = new Date("2026-12-06T10:00:00+05:30");
+const DRIVE_EVENTS = [
+  { startsAt: new Date("2026-12-05T15:00:00+05:30"), label: "Saturday, 5 December" },
+  { startsAt: new Date("2026-12-06T12:00:00+05:30"), label: "Sunday, 6 December" },
+];
 const EASE = [0.22, 0.61, 0.36, 1];
 
 function getTimeLeft() {
-  const diff = Math.max(0, DRIVE_DATE.getTime() - Date.now());
+  const nextEvent = DRIVE_EVENTS.find(({ startsAt }) => startsAt.getTime() > Date.now());
+  if (!nextEvent) return { over: true };
+
+  const diff = nextEvent.startsAt.getTime() - Date.now();
   return {
     days: Math.floor(diff / 86400000),
     hours: Math.floor((diff / 3600000) % 24),
     minutes: Math.floor((diff / 60000) % 60),
     seconds: Math.floor((diff / 1000) % 60),
-    over: diff === 0,
+    label: `Next event · ${nextEvent.label}`,
+    over: false,
   };
 }
 
@@ -76,7 +81,7 @@ function Countdown() {
   }, []);
 
   if (time.over) {
-    return <p className="font-semibold text-orange-300">The drive is happening now</p>;
+    return <p className="font-semibold">The adoption drive has begun!</p>;
   }
 
   const units = [
@@ -87,15 +92,18 @@ function Countdown() {
   ];
 
   return (
-    <div className="drive-countdown" role="timer" aria-label="Countdown to adoption drive">
-      {units.map(([label, value]) => (
-        <div key={label} className="drive-countdown__unit">
-          <span className="drive-countdown__value">
-            <RollingNumber value={label === "days" ? String(value) : String(value).padStart(2, "0")} />
-          </span>
-          <span className="drive-countdown__label">{label}</span>
-        </div>
-      ))}
+    <div>
+      <span className="drive-countdown-label">{time.label}</span>
+      <div className="drive-countdown" role="timer" aria-label={`Countdown to ${time.label}`}>
+        {units.map(([label, value]) => (
+          <div key={label} className="drive-countdown__unit">
+            <span className="drive-countdown__value">
+              <RollingNumber value={label === "days" ? String(value) : String(value).padStart(2, "0")} />
+            </span>
+            <span className="drive-countdown__label">{label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -180,7 +188,7 @@ function RsvpSection() {
   const [statsError, setStatsError] = useState("");
   const [statsLoaded, setStatsLoaded] = useState(false);
   const [statsUpdatedAt, setStatsUpdatedAt] = useState(null);
-  const [form, setForm] = useState({ name: "", phone: "", guests: 1 });
+  const [form, setForm] = useState({ name: "", phone: "", guests: 1, eventDate: "" });
   const [status, setStatus] = useState({ type: null, msg: "" });
   const [busy, setBusy] = useState(false);
 
@@ -229,8 +237,13 @@ function RsvpSection() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Something went wrong. Please try again.");
 
-      setStatus({ type: "ok", msg: "You’re on the list. See you on 6 December!" });
-      setForm({ name: "", phone: "", guests: 1 });
+      const eventMessage = {
+        "2026-12-05": "See you on 5 December at 90’s Nest Cafe!",
+        "2026-12-06": "See you on 6 December at Urban Brews!",
+        both: "See you on 5 and 6 December!",
+      }[form.eventDate];
+      setStatus({ type: "ok", msg: `You’re on the list. ${eventMessage}` });
+      setForm({ name: "", phone: "", guests: 1, eventDate: "" });
       await loadStats();
     } catch (error) {
       setStatus({ type: "err", msg: error.message });
@@ -248,7 +261,7 @@ function RsvpSection() {
             Your next best friend
             <span className="drive-serif block font-normal text-orange-300">is waiting to meet you.</span>
           </h2>
-          <p className="mt-6 max-w-md text-base leading-7 text-white/65">
+          <p className="mt-6 max-w-md text-base leading-7 text-[#2d2723]/70">
             Drop by, meet the pups and ask us anything. Let us know you’re coming so we can make room for you.
           </p>
 
@@ -314,6 +327,21 @@ function RsvpSection() {
                 onChange={(event) => setForm({ ...form, phone: event.target.value })}
               />
             </div>
+            <div>
+              <label className="drive-label" htmlFor="drive-event-date">Which day are you joining us?</label>
+              <select
+                id="drive-event-date"
+                className="drive-input drive-select"
+                required
+                value={form.eventDate}
+                onChange={(event) => setForm({ ...form, eventDate: event.target.value })}
+              >
+                <option value="">Choose a day</option>
+                <option value="2026-12-05">5 December · 90’s Nest Cafe</option>
+                <option value="2026-12-06">6 December · Urban Brews</option>
+                <option value="both">Both days</option>
+              </select>
+            </div>
             <div className="flex items-center justify-between gap-5">
               <label className="drive-label mb-0" htmlFor="drive-guests">How many are coming?</label>
               <input
@@ -322,6 +350,7 @@ function RsvpSection() {
                 type="number"
                 min={1}
                 max={10}
+                required
                 value={form.guests}
                 onChange={(event) => setForm({ ...form, guests: event.target.value })}
               />
@@ -548,7 +577,7 @@ export default function AdoptionDrive() {
               <Reveal>
                 <p className="drive-pill">
                   <span className="drive-pill__dot" />
-                  North Karnataka’s first adoption drive
+                  ADOPTION DRIVE — PLAY WITH PUPPIES
                 </p>
               </Reveal>
 
@@ -560,7 +589,7 @@ export default function AdoptionDrive() {
                     animate={{ y: "0%" }}
                     transition={{ duration: 0.85, ease: EASE, delay: 0.1 }}
                   >
-                    A little day.
+                    BERANG SI ZINDAGI MEIN RANG BHARDO
                   </motion.span>
                 </span>
                 <span className="drive-title__accent drive-serif block overflow-hidden pb-[0.08em] font-normal italic">
@@ -570,13 +599,13 @@ export default function AdoptionDrive() {
                     animate={{ y: "0%" }}
                     transition={{ duration: 0.85, ease: EASE, delay: 0.22 }}
                   >
-                    A lifetime of love.
+                    PUPPIES KE SAANG
                   </motion.span>
                 </span>
               </h1>
 
               <Reveal delay={0.25}>
-                <p className="max-w-xl text-base leading-7 text-white/65 md:text-lg md:leading-8">
+                <p className="max-w-xl text-base leading-7 text-[#2d2723]/70 md:text-lg md:leading-8">
                   Come meet the Indie dogs looking for their person. One hello could change both your lives.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -619,18 +648,19 @@ export default function AdoptionDrive() {
           <Reveal delay={0.35} className="drive-eventbar">
             <div className="drive-eventbar__detail">
               <span className="drive-eventbar__icon"><CalendarDays size={18} /></span>
-              <span className="drive-eventbar__copy"><strong>Sunday, 6 December 2026</strong><small>Save the date</small></span>
+              <span className="drive-eventbar__copy">
+                <strong>Saturday, 5 December</strong>
+                <small>3 PM onwards · <a href="https://www.google.com/maps/search/?api=1&query=90%27s+Nest+Cafe%2C+Bijapur%2C+Karnataka" target="_blank" rel="noreferrer">90&apos;s Nest Cafe <ArrowUpRight size={11} /></a></small>
+              </span>
             </div>
             <div className="drive-eventbar__detail">
-              <span className="drive-eventbar__icon"><Clock3 size={18} /></span>
-              <span className="drive-eventbar__copy"><strong>10:00 AM onwards</strong><small>Come by anytime</small></span>
-            </div>
-            <div className="drive-eventbar__detail">
-              <span className="drive-eventbar__icon"><MapPin size={18} /></span>
-              <span className="drive-eventbar__copy"><strong>Bijapur, Karnataka</strong><small>Venue to be announced</small></span>
+              <span className="drive-eventbar__icon"><CalendarDays size={18} /></span>
+              <span className="drive-eventbar__copy">
+                <strong>Sunday, 6 December</strong>
+                <small>12 PM onwards · <a href="https://www.google.com/maps/search/?api=1&query=Urban+Brews%2C+Bijapur%2C+Karnataka" target="_blank" rel="noreferrer">Urban Brews <ArrowUpRight size={11} /></a></small>
+              </span>
             </div>
             <div className="drive-eventbar__countdown">
-              <span className="drive-countdown-label">The big day in</span>
               <Countdown />
             </div>
           </Reveal>

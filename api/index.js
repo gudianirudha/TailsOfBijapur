@@ -118,6 +118,7 @@ const driveRsvpSchema = new mongoose.Schema({
     name: { type: String, required: true, maxlength: 60 },
     phone: { type: String, required: true },
     guests: { type: Number, default: 1, min: 1, max: 10 },
+    eventDate: { type: String, enum: ["2026-12-05", "2026-12-06", "both"], required: true },
     drive: { type: String, default: "2026-12-06" },
 }, { timestamps: true });
 const DriveRsvp = mongoose.model("DriveRsvp", driveRsvpSchema);
@@ -320,16 +321,19 @@ const adoptionInterestLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 
 app.post("/api/drive/rsvp", driveLimiter, async(req, res) => {
     try {
-        const { name, phone } = req.body;
+        const { name, phone, eventDate } = req.body;
         const guests = Math.min(10, Math.max(1, parseInt(req.body.guests) || 1));
         if (!name || !phone) return res.status(400).json({ error: "Name and phone are required" });
+        if (!["2026-12-05", "2026-12-06", "both"].includes(eventDate)) {
+            return res.status(400).json({ error: "Choose a valid adoption drive date" });
+        }
         if (!isValidPhone(phone)) return res.status(400).json({ error: "Invalid phone format" });
 
         const cleanPhone = sanitizeInput(phone);
         const exists = await DriveRsvp.exists({ phone: cleanPhone });
         if (exists) return res.status(409).json({ error: "This number is already registered" });
 
-        await DriveRsvp.create({ name: sanitizeInput(name).slice(0, 60), phone: cleanPhone, guests });
+        await DriveRsvp.create({ name: sanitizeInput(name).slice(0, 60), phone: cleanPhone, guests, eventDate });
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: "RSVP failed" });
