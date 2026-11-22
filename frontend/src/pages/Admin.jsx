@@ -6,6 +6,9 @@ export default function Admin() {
   const [adoptions, setAdoptions] = useState([]);
   const [adoptionInterests, setAdoptionInterests] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
+  const [portalAccounts, setPortalAccounts] = useState([]);
+  const [drivePuppies, setDrivePuppies] = useState([]);
+  const [driveDataError, setDriveDataError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,6 +20,8 @@ export default function Admin() {
     fetchAdoptions(token);
     fetchAdoptionInterests(token);
     fetchVolunteers(token);
+    fetchPortalAccounts(token);
+    fetchDrivePuppies(token);
   }, [navigate]);
 
   // ================= FETCH LOGIC =================
@@ -77,6 +82,40 @@ export default function Admin() {
     }
   }
 
+  async function fetchPortalAccounts(token) {
+    try {
+      const res = await fetch("/api/admin/volunteer-accounts?status=pending", {
+        headers: { Authorization: "Bearer " + token },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch volunteer account requests.");
+      setPortalAccounts(await res.json());
+    } catch (err) {
+      setDriveDataError(err.message);
+    }
+  }
+
+  async function fetchDrivePuppies(token) {
+    try {
+      const res = await fetch("/api/admin/drive-puppies", {
+        headers: { Authorization: "Bearer " + token },
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch drive puppy records.");
+      setDrivePuppies(await res.json());
+    } catch (err) {
+      setDriveDataError(err.message);
+    }
+  }
+
   // ================= UPDATE LOGIC =================
   async function updateAdoption(id, status) {
     const token = sessionStorage.getItem("adminToken");
@@ -125,6 +164,29 @@ export default function Admin() {
       if (process.env.NODE_ENV !== "production") {
         console.error("Update volunteer error");
       }
+    }
+  }
+
+  async function updatePortalAccount(id, status) {
+    const token = sessionStorage.getItem("adminToken");
+    try {
+      const res = await fetch(`/api/admin/volunteer-accounts/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to update volunteer portal access");
+        return;
+      }
+      setPortalAccounts((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      alert("Could not update volunteer portal access. Please try again.");
     }
   }
 
@@ -372,6 +434,82 @@ export default function Admin() {
                   </div>
 
                 </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-10 flex items-center gap-4">
+            <div className="rounded-xl bg-orange-600/20 p-3 text-orange-500"><Users size={24} /></div>
+            <div>
+              <h2 className="text-4xl font-black uppercase tracking-tighter md:text-5xl">Portal access requests</h2>
+              <p className="mt-1 text-sm text-gray-500">Approve volunteers before they can register puppies.</p>
+            </div>
+          </div>
+          {driveDataError && (
+            <p className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300" role="alert">
+              {driveDataError}
+            </p>
+          )}
+          {portalAccounts.length === 0 ? (
+            <div className="rounded-[2rem] border border-dashed border-white/10 bg-[#111] p-10 text-center text-gray-500">No pending portal access requests.</div>
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-2">
+              {portalAccounts.map((item) => (
+                <article key={item._id} className="flex flex-col justify-between gap-5 rounded-[2rem] border border-white/10 bg-[#111] p-7 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="text-2xl font-black text-white">{item.name}</h3>
+                    <p className="mt-2 flex items-center gap-2 text-sm text-gray-400"><Mail size={15} />{item.email}</p>
+                    <p className="mt-1 flex items-center gap-2 text-sm text-gray-400"><Phone size={15} />{item.phone}</p>
+                    <p className="mt-2 text-xs text-gray-600">Requested {new Date(item.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => updatePortalAccount(item._id, "approved")} className="flex items-center gap-2 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-xs font-black uppercase tracking-widest text-green-500 hover:bg-green-500 hover:text-white">
+                      <Check size={15} /> Approve
+                    </button>
+                    <button onClick={() => updatePortalAccount(item._id, "rejected")} className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-500 hover:text-white">
+                      <X size={15} /> Reject
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-10 flex items-center gap-4">
+            <div className="rounded-xl bg-orange-600/20 p-3 text-orange-500"><PawPrint size={24} /></div>
+            <div>
+              <h2 className="text-4xl font-black uppercase tracking-tighter md:text-5xl">Drive puppies</h2>
+              <p className="mt-1 text-sm text-gray-500">Internal intake and adopter records.</p>
+            </div>
+          </div>
+          {drivePuppies.length === 0 ? (
+            <div className="rounded-[2rem] border border-dashed border-white/10 bg-[#111] p-10 text-center text-gray-500">No puppies have been registered for the drive yet.</div>
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-2">
+              {drivePuppies.map((item) => (
+                <article key={item._id} className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#111]">
+                  {item.photos?.[0] && <img src={item.photos[0].url} alt={item.name || `Puppy ${item.tagNumber}`} className="h-56 w-full object-cover" />}
+                  <div className="space-y-3 p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div><p className="text-xs font-black uppercase tracking-widest text-orange-500">{item.tagNumber}</p><h3 className="mt-1 text-2xl font-black text-white">{item.name || "Unnamed puppy"}</h3></div>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase text-gray-300">{item.status}</span>
+                    </div>
+                    <p className="text-sm text-gray-400">{item.age} · {item.gender} · {item.vaccination}</p>
+                    <p className="text-xs text-gray-500">Registered by {item.volunteerId?.name || "Unknown volunteer"} ({item.volunteerId?.email || "no email"})</p>
+                    {item.status === "adopted" && (
+                      <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-sm leading-6 text-gray-300">
+                        <p className="font-bold text-green-400">Adopter: {item.adoption?.name}</p>
+                        <p>{item.adoption?.phone}</p>
+                        <p>{item.adoption?.address}</p>
+                        <p className="text-xs text-gray-500">{item.adoption?.adoptedAt ? new Date(item.adoption.adoptedAt).toLocaleString() : ""}</p>
+                      </div>
+                    )}
+                  </div>
+                </article>
               ))}
             </div>
           )}

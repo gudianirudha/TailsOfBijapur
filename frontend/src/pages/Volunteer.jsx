@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ArrowRight, HeartPulse, ShieldAlert, Activity, CheckCircle2, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Volunteer() {
   const [form, setForm] = useState({
@@ -163,6 +164,12 @@ export default function Volunteer() {
                 )}
               </div>
             </form>
+            <p className="relative z-10 mt-5 text-center text-sm text-gray-500">
+              Already on the team?{" "}
+              <Link to="/volunteer-portal" className="font-bold text-orange-500 underline underline-offset-4 hover:text-orange-400">
+                Open the volunteer portal
+              </Link>
+            </p>
           </div>
         </div>
       </section>

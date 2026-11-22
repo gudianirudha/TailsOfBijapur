@@ -22,6 +22,20 @@ const DRIVE_EVENTS = [
 ];
 const EASE = [0.22, 0.61, 0.36, 1];
 
+async function readApiJson(response, endpointLabel) {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      `${endpointLabel} returned a webpage instead of JSON. The API deployment may be out of date or misrouted.`
+    );
+  }
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || `${endpointLabel} request failed.`);
+  }
+  return data;
+}
+
 function getTimeLeft() {
   const nextEvent = DRIVE_EVENTS.find(({ startsAt }) => startsAt.getTime() > Date.now());
   if (!nextEvent) return { over: true };
@@ -105,6 +119,122 @@ function Countdown() {
         ))}
       </div>
     </div>
+  );
+}
+
+function LivePuppyDashboard() {
+  const [dashboard, setDashboard] = useState({ available: 0, adopted: 0, puppies: [] });
+  const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [filter, setFilter] = useState("all");
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      const response = await fetch("/api/drive/puppies", { cache: "no-store" });
+      const data = await readApiJson(response, "Live puppy dashboard");
+      if (!Array.isArray(data.puppies) || !Number.isFinite(data.available) || !Number.isFinite(data.adopted)) {
+        throw new Error("Live puppy dashboard data is unavailable.");
+      }
+      setDashboard(data);
+      setError("");
+      setLoaded(true);
+      setUpdatedAt(new Date());
+    } catch (loadError) {
+      setError(loadError.message || "Live puppy dashboard is temporarily unavailable.");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
+    const refreshVisibleDashboard = () => {
+      if (document.visibilityState === "visible") loadDashboard();
+    };
+    const timer = window.setInterval(refreshVisibleDashboard, 30_000);
+    document.addEventListener("visibilitychange", refreshVisibleDashboard);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshVisibleDashboard);
+    };
+  }, [loadDashboard]);
+
+  const puppies = filter === "all"
+    ? dashboard.puppies
+    : dashboard.puppies.filter((puppy) => puppy.status === filter);
+
+  return (
+    <section className="drive-live-dashboard" aria-labelledby="drive-live-dashboard-title">
+      <div className="drive-wrap">
+        <Reveal className="drive-live-dashboard__header">
+          <div>
+            <p className="drive-eyebrow">Updated live</p>
+            <h2 id="drive-live-dashboard-title">Puppy adoption dashboard</h2>
+            <p className="drive-live-dashboard__intro">Meet the puppies coming to the drive and celebrate the ones who have found a home.</p>
+          </div>
+          <div className="drive-live-dashboard__totals" aria-label="Puppy adoption totals">
+            <div><strong>{dashboard.available}</strong><span>Looking for homes</span></div>
+            <div><strong>{dashboard.adopted}</strong><span>Adopted</span></div>
+          </div>
+        </Reveal>
+
+        <div className="drive-live-dashboard__toolbar">
+          <div className="drive-live-dashboard__filters" role="group" aria-label="Filter puppies">
+            {[
+              ["all", "All puppies"],
+              ["available", "Available"],
+              ["adopted", "Adopted"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={filter === value ? "is-active" : ""}
+                aria-pressed={filter === value}
+                onClick={() => setFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="drive-live-dashboard__updated" aria-live="polite">
+            {error ? "Updates paused" : updatedAt ? `Updated ${updatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Loading live updates…"}
+          </p>
+        </div>
+
+        {error && <p className="drive-live-dashboard__error" role="alert">{error}</p>}
+
+        {puppies.length > 0 ? (
+          <div className="drive-live-dashboard__grid">
+            {puppies.map((puppy, index) => (
+              <Reveal key={`${puppy.name}-${index}`} delay={Math.min(index * 0.035, 0.2)} className="drive-live-puppy">
+                {puppy.photo ? (
+                  <img src={puppy.photo} alt={puppy.name || "Puppy available for adoption"} loading="lazy" />
+                ) : (
+                  <div className="drive-live-puppy__placeholder"><Heart size={28} /></div>
+                )}
+                <div className="drive-live-puppy__info">
+                  <div>
+                    <h3>{puppy.name || "A lovely Indie pup"}</h3>
+                    <span className={`drive-live-puppy__status${puppy.status === "adopted" ? " is-adopted" : ""}`}>
+                      {puppy.status === "adopted" ? "Found a home" : "Looking for a home"}
+                    </span>
+                  </div>
+                  {puppy.status === "adopted" && (
+                    <p className="drive-live-puppy__adopter">
+                      {puppy.adopterFirstName ? `Adopted by ${puppy.adopterFirstName}` : "A new family found each other"}
+                    </p>
+                  )}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        ) : (
+          <p className="drive-live-dashboard__empty">
+            {loaded ? "Puppy profiles will appear here as volunteers register them." : "Loading puppy profiles…"}
+          </p>
+        )}
+        <p className="drive-live-dashboard__privacy">Adopter contact details and addresses are kept private.</p>
+      </div>
+    </section>
   );
 }
 
@@ -195,8 +325,7 @@ function RsvpSection() {
   const loadStats = useCallback(async () => {
     try {
       const response = await fetch("/api/drive/rsvps");
-      if (!response.ok) throw new Error("Unable to load attendance right now.");
-      const data = await response.json();
+      const data = await readApiJson(response, "Live attendance");
       if (!Number.isFinite(data.people) || !Number.isFinite(data.groups)) {
         throw new Error("Attendance totals are unavailable.");
       }
@@ -710,6 +839,7 @@ export default function AdoptionDrive() {
       <AdoptionInterestSection />
       <ProudIndieParentSection />
       <RsvpSection />
+      <LivePuppyDashboard />
 
       <section className="drive-lastcall">
         <div className="drive-wrap drive-lastcall__inner">

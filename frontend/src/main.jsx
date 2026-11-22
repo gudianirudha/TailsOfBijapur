@@ -18,6 +18,7 @@ import Doctors from "./pages/Doctors"
 import Indies from './pages/Indies'
 import Admin from './pages/Admin'
 import AdminLogin from './pages/AdminLogin'
+import VolunteerPortal from './pages/VolunteerPortal'
 import Awareness from './pages/Awareness';
 import Donate from './pages/Donate';
 import Impact from './pages/Impact'
@@ -44,6 +45,7 @@ function App() {
           <Route path="indies" element={<Indies />} />
           <Route path="admin" element={<Admin />} />
           <Route path="admin-login" element={<AdminLogin />} />
+          <Route path="volunteer-portal" element={<VolunteerPortal />} />
           <Route path="awareness" element={<Awareness />} />
           <Route path="donate" element={<Donate />} />
           <Route path="impact" element={<Impact />} />
