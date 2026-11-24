@@ -363,7 +363,7 @@ function RsvpSection() {
 
   const loadStats = useCallback(async () => {
     try {
-      const response = await fetch("/api/drive/rsvps");
+      const response = await fetch("/api/drive/rsvps", { cache: "no-store" });
       const data = await readApiJson(response, "Live attendance");
       if (!Number.isFinite(data.people) || !Number.isFinite(data.groups)) {
         throw new Error("Attendance totals are unavailable.");
@@ -372,8 +372,8 @@ function RsvpSection() {
       setStatsError("");
       setStatsLoaded(true);
       setStatsUpdatedAt(new Date());
-    } catch {
-      setStatsError("Attendance totals are temporarily unavailable.");
+    } catch (error) {
+      setStatsError(error.message || "Attendance totals are temporarily unavailable.");
     }
   }, []);
 
@@ -445,7 +445,7 @@ function RsvpSection() {
                 </span>
               )}
             </div>
-            {stats.people > 0 ? (
+            {statsLoaded ? (
               <div className="drive-attendance__totals">
                 <p>
                   <strong><RollingNumber value={String(stats.people)} /></strong>
@@ -457,7 +457,7 @@ function RsvpSection() {
               </div>
             ) : (
               <p className="drive-attendance__empty">
-                {statsError || (statsLoaded ? "Be the first to save a spot." : "Checking who’s coming…")}
+                {statsError || "Checking who’s coming…"}
               </p>
             )}
             {statsError && statsLoaded && (

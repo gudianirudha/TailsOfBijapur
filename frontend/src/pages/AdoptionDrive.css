@@ -1774,7 +1774,9 @@
   .drive-live-dashboard__progress-track > span {
     transition: none;
   }
+}
 
+@media (max-width: 700px) {
   .drive-hero {
     padding-top: 120px;
   }

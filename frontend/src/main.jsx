@@ -49,7 +49,7 @@ function App() {
           <Route path="awareness" element={<Awareness />} />
           <Route path="donate" element={<Donate />} />
           <Route path="impact" element={<Impact />} />
-          <Route path="drive" element={<Suspense fallback={<div className="min-h-screen bg-[#0A0A0A]" />}><AdoptionDrive /></Suspense>} />
+          <Route path="drive" element={<Suspense fallback={<div className="min-h-screen bg-[#f1ece2] px-6 pt-32 text-center text-[#2d2723]" role="status">Loading adoption drive…</div>}><AdoptionDrive /></Suspense>} />
         </Route>
       </Routes>
     </BrowserRouter>
