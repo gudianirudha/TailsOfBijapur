@@ -439,6 +439,7 @@ app.get("/api/drive/rsvps", async(req, res) => {
             DriveRsvp.aggregate([{ $group: { _id: null, people: { $sum: "$guests" }, groups: { $sum: 1 } } }]),
             DriveRsvp.find().sort({ createdAt: -1 }).limit(12).select("name guests createdAt").lean(),
         ]);
+        res.set("Cache-Control", "no-store");
         res.json({
             people: agg[0]?.people || 0,
             groups: agg[0]?.groups || 0,
