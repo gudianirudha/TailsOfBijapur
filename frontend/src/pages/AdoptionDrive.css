@@ -10,6 +10,7 @@
   --drive-dark: #f1ece2;
   --drive-orange: #ef7c43;
   --drive-paper: #f1ece2;
+  overflow-x: clip;
   color: var(--drive-ink);
   background: var(--drive-paper);
   font-family: "Lexend", ui-sans-serif, system-ui, sans-serif;
@@ -1218,6 +1219,33 @@
 
   .drive-proud__art {
     min-height: 390px;
+  }
+}
+
+@media (max-width: 850px) {
+  .drive-page .drive-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .drive-hero__grid,
+  .drive-proud__grid,
+  .drive-rsvp__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .drive-hero__visual {
+    width: min(100%, 560px);
+    margin-inline: auto;
+  }
+
+  .drive-proud__visual {
+    width: min(100%, 480px);
+    margin-inline: auto;
+  }
+
+  .drive-rsvp__inner {
+    gap: 36px;
   }
 }
 

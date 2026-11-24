@@ -59,7 +59,7 @@ function Reveal({ children, delay = 0, className = "", as = "div" }) {
 
   return (
     <Tag
-      className={className}
+      className={`drive-reveal ${className}`}
       initial={reduce ? false : { opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-70px" }}
@@ -596,7 +596,7 @@ export default function AdoptionDrive() {
   const reduce = useReducedMotion();
 
   return (
-    <div className="drive-page overflow-x-hidden">
+    <div className="drive-page">
       <section className="drive-hero relative overflow-hidden">
         <div className="drive-hero__glow" aria-hidden="true" />
         <div className="drive-wrap relative z-10">
