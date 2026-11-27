@@ -38,6 +38,7 @@ const DRIVE_EVENTS = [
     time: "12–3 PM",
     venue: "Urban Brews",
     address: "Cross, Banjara Rd, near Patil Planet Mall, Banjara Nagar, Vijayapura, Karnataka 586103",
+    parking: "Parking available",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Cross%2C+Banjara+Rd%2C+near+Patil+Planet+Mall%2C+Banjara+Nagar%2C+Vijayapura%2C+Karnataka+586103",
   },
 ];
@@ -49,13 +50,6 @@ function getDriveStatus(now = new Date()) {
 
   const nextEvent = DRIVE_EVENTS.find(({ startsAt, endsAt }) => startsAt > now && endsAt > now);
   return nextEvent ? { type: "upcoming", event: nextEvent } : { type: "ended" };
-}
-
-function getPuppyEnquiryUrl(puppy) {
-  const name = puppy.name || "this puppy";
-  const subject = encodeURIComponent(`Meet ${name} at the adoption drive`);
-  const body = encodeURIComponent(`Hello, I’d like to know more about meeting ${name}, including their temperament and care needs.`);
-  return `mailto:support@tailsofbijapur.org?subject=${subject}&body=${body}`;
 }
 
 function getPuppyHealthNote(puppy) {
@@ -311,11 +305,6 @@ function LivePuppyDashboard() {
                     <p className="drive-live-puppy__adopter">
                       {puppy.adopterFirstName ? `With ${puppy.adopterFirstName}` : "A new family found each other"}
                     </p>
-                  )}
-                  {puppy.status === "available" && (
-                    <a className="drive-live-puppy__enquiry" href={getPuppyEnquiryUrl(puppy)}>
-                      Ask about meeting {puppy.name || "this pup"} <ArrowUpRight size={14} />
-                    </a>
                   )}
                 </div>
               </Reveal>
@@ -783,7 +772,6 @@ export default function AdoptionDrive() {
                   <small>{driveEvent.time} · {driveEvent.venue}</small>
                   <small>{driveEvent.address || "Exact address to be confirmed"}</small>
                   <small>{driveEvent.parking || "Parking details to be confirmed"}</small>
-                  <small>{driveEvent.accessibility || "Accessibility details to be confirmed"}</small>
                   <span className="drive-eventbar__actions">
                     <a href={driveEvent.mapUrl} target="_blank" rel="noreferrer" aria-label={`Directions to ${driveEvent.venue}`}>
                       Directions <ArrowUpRight size={12} />

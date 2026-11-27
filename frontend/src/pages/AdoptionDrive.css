@@ -2031,8 +2031,7 @@
   text-underline-offset: 3px;
 }
 
-.drive-eventbar__actions a:focus-visible,
-.drive-live-puppy__enquiry:focus-visible {
+.drive-eventbar__actions a:focus-visible {
   border-radius: 3px;
   outline: 2px solid #8f4028;
   outline-offset: 3px;
@@ -2091,18 +2090,6 @@
 
 .drive-live-puppy__details dd {
   overflow-wrap: anywhere;
-}
-
-.drive-live-puppy__enquiry {
-  display: inline-flex;
-  min-height: 40px;
-  align-items: center;
-  gap: 5px;
-  color: #8f4028;
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .drive-rsvp__card .drive-input {
