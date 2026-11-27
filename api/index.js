@@ -1171,7 +1171,7 @@ app.get("/api/drive/puppies", async(req, res) => {
             Puppy.countDocuments({ status: "available" }),
             Puppy.countDocuments({ status: "adopted" }),
             Puppy.find()
-                .select("name photos status adoption.name adoption.publicNameConsent")
+                .select("name age gender vaccination dhppiDoseCount dhppiVaccinations antiRabiesVaccinations photos status adoption.name adoption.publicNameConsent")
                 .sort({ updatedAt: -1 })
                 .limit(100)
                 .lean(),
@@ -1181,8 +1181,15 @@ app.get("/api/drive/puppies", async(req, res) => {
             available,
             adopted,
             puppies: puppies.map((puppy) => ({
+                id: puppy._id.toString(),
                 name: puppy.name || "",
                 photo: puppy.photos?.[0]?.url || "",
+                age: puppy.age || "",
+                gender: puppy.gender || "",
+                vaccination: puppy.vaccination || "",
+                dhppiDoseCount: puppy.dhppiDoseCount,
+                dhppiVaccinations: puppy.dhppiVaccinations || [],
+                antiRabiesVaccinations: puppy.antiRabiesVaccinations || [],
                 status: puppy.status,
                 adopterFirstName: puppy.adoption?.publicNameConsent
                     ? String(puppy.adoption.name || "").trim().split(/\s+/)[0]
