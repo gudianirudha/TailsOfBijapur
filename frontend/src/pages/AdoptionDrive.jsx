@@ -19,10 +19,59 @@ import {
 import "./AdoptionDrive.css";
 
 const DRIVE_EVENTS = [
-  { startsAt: new Date("2026-12-05T15:00:00+05:30"), label: "Saturday, 5 December" },
-  { startsAt: new Date("2026-12-06T12:00:00+05:30"), label: "Sunday, 6 December" },
+  {
+    id: "2026-12-05",
+    startsAt: new Date("2026-12-05T15:00:00+05:30"),
+    endsAt: new Date("2026-12-05T18:00:00+05:30"),
+    label: "Saturday, 5 December",
+    time: "3–6 PM",
+    venue: "90’s Nest Cafe",
+    address: "Begum Talab, near Ring Road, Vijayapura, Karnataka 586109",
+    parking: "Parking available",
+    mapUrl: "https://maps.app.goo.gl/8kjA2L6Jzw3F6ArN7",
+  },
+  {
+    id: "2026-12-06",
+    startsAt: new Date("2026-12-06T12:00:00+05:30"),
+    endsAt: new Date("2026-12-06T15:00:00+05:30"),
+    label: "Sunday, 6 December",
+    time: "12–3 PM",
+    venue: "Urban Brews",
+    address: "Cross, Banjara Rd, near Patil Planet Mall, Banjara Nagar, Vijayapura, Karnataka 586103",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Cross%2C+Banjara+Rd%2C+near+Patil+Planet+Mall%2C+Banjara+Nagar%2C+Vijayapura%2C+Karnataka+586103",
+  },
 ];
 const EASE = [0.22, 0.61, 0.36, 1];
+
+function getDriveStatus(now = new Date()) {
+  const activeEvent = DRIVE_EVENTS.find(({ startsAt, endsAt }) => now >= startsAt && now < endsAt);
+  if (activeEvent) return { type: "live", event: activeEvent };
+
+  const nextEvent = DRIVE_EVENTS.find(({ startsAt, endsAt }) => startsAt > now && endsAt > now);
+  return nextEvent ? { type: "upcoming", event: nextEvent } : { type: "ended" };
+}
+
+function getPuppyEnquiryUrl(puppy) {
+  const name = puppy.name || "this puppy";
+  const subject = encodeURIComponent(`Meet ${name} at the adoption drive`);
+  const body = encodeURIComponent(`Hello, I’d like to know more about meeting ${name}, including their temperament and care needs.`);
+  return `mailto:support@tailsofbijapur.org?subject=${subject}&body=${body}`;
+}
+
+function getPuppyHealthNote(puppy) {
+  if (puppy.vaccination?.trim()) return puppy.vaccination;
+  const notes = [];
+  if (Number.isFinite(puppy.dhppiDoseCount)) {
+    notes.push(`${puppy.dhppiDoseCount} DHPPI dose${puppy.dhppiDoseCount === 1 ? "" : "s"} recorded`);
+  }
+  if (puppy.antiRabiesVaccinations?.length) {
+    notes.push(`Anti-rabies: ${puppy.antiRabiesVaccinations.join(", ")}`);
+  }
+  if (puppy.dhppiVaccinations?.length) {
+    notes.push(`DHPPI: ${puppy.dhppiVaccinations.join(", ")}`);
+  }
+  return notes.join(" · ") || "Ask our team about vaccination records.";
+}
 
 async function readApiJson(response, endpointLabel) {
   const contentType = response.headers.get("content-type") || "";
@@ -39,9 +88,13 @@ async function readApiJson(response, endpointLabel) {
 }
 
 function getTimeLeft() {
-  const nextEvent = DRIVE_EVENTS.find(({ startsAt }) => startsAt.getTime() > Date.now());
-  if (!nextEvent) return { over: true };
+  const driveStatus = getDriveStatus();
+  if (driveStatus.type === "ended") return { over: true };
+  if (driveStatus.type === "live") {
+    return { live: true, label: driveStatus.event.label, over: false };
+  }
 
+  const nextEvent = driveStatus.event;
   const diff = nextEvent.startsAt.getTime() - Date.now();
   return {
     days: Math.floor(diff / 86400000),
@@ -97,7 +150,10 @@ function Countdown() {
   }, []);
 
   if (time.over) {
-    return <p className="font-semibold">The adoption drive has begun!</p>;
+    return <p className="font-semibold">The adoption drive has ended. Thank you for being part of it!</p>;
+  }
+  if (time.live) {
+    return <p className="font-semibold" aria-live="polite">Happening now · {time.label}</p>;
   }
 
   const units = [
@@ -242,11 +298,24 @@ function LivePuppyDashboard() {
                     <span className={`drive-live-puppy__status${puppy.status === "adopted" ? " is-adopted" : ""}`}>
                       {puppy.status === "adopted" ? "Adoption success" : "Ready to meet you"}
                     </span>
+                    <dl className="drive-live-puppy__details">
+                      {puppy.age && <div><dt>Age</dt><dd>{puppy.age}</dd></div>}
+                      {puppy.gender && <div><dt>Gender</dt><dd>{puppy.gender}</dd></div>}
+                      <div>
+                        <dt>Health</dt>
+                        <dd>{getPuppyHealthNote(puppy)}</dd>
+                      </div>
+                    </dl>
                   </div>
                   {puppy.status === "adopted" && (
                     <p className="drive-live-puppy__adopter">
                       {puppy.adopterFirstName ? `With ${puppy.adopterFirstName}` : "A new family found each other"}
                     </p>
+                  )}
+                  {puppy.status === "available" && (
+                    <a className="drive-live-puppy__enquiry" href={getPuppyEnquiryUrl(puppy)}>
+                      Ask about meeting {puppy.name || "this pup"} <ArrowUpRight size={14} />
+                    </a>
                   )}
                 </div>
               </Reveal>
@@ -353,6 +422,7 @@ const BEFORE_YOU_ADOPT = [
 ];
 
 function RsvpSection() {
+  const [now, setNow] = useState(() => new Date());
   const [stats, setStats] = useState({ people: 0, groups: 0 });
   const [statsError, setStatsError] = useState("");
   const [statsLoaded, setStatsLoaded] = useState(false);
@@ -360,6 +430,13 @@ function RsvpSection() {
   const [form, setForm] = useState({ name: "", phone: "", guests: 1, eventDate: "" });
   const [status, setStatus] = useState({ type: null, msg: "" });
   const [busy, setBusy] = useState(false);
+  const selectableEvents = DRIVE_EVENTS.filter(({ endsAt }) => endsAt > now);
+  const driveStatus = getDriveStatus(now);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const loadStats = useCallback(async () => {
     try {
@@ -393,6 +470,14 @@ function RsvpSection() {
 
   async function submit(event) {
     event.preventDefault();
+    const selectedEvents = form.eventDate === "both"
+      ? DRIVE_EVENTS
+      : DRIVE_EVENTS.filter(({ id }) => id === form.eventDate);
+    if (!selectedEvents.length || selectedEvents.some(({ endsAt }) => endsAt <= new Date())) {
+      setStatus({ type: "err", msg: "This drive date has passed. Please choose an upcoming event." });
+      return;
+    }
+
     setBusy(true);
     setStatus({ type: null, msg: "" });
 
@@ -405,12 +490,11 @@ function RsvpSection() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Something went wrong. Please try again.");
 
-      const eventMessage = {
-        "2026-12-05": "See you on 5 December at 90’s Nest Cafe!",
-        "2026-12-06": "See you on 6 December at Urban Brews!",
-        both: "See you on 5 and 6 December!",
-      }[form.eventDate];
-      setStatus({ type: "ok", msg: `You’re on the list. ${eventMessage}` });
+      setStatus({
+        type: "ok",
+        msg: "Your RSVP is confirmed.",
+        confirmation: { events: selectedEvents, guests: Number(form.guests) },
+      });
       setForm({ name: "", phone: "", guests: 1, eventDate: "" });
       await loadStats();
     } catch (error) {
@@ -431,6 +515,13 @@ function RsvpSection() {
           </h2>
           <p className="mt-6 max-w-md text-base leading-7 text-[#2d2723]/70">
             Drop by, meet the pups and ask us anything. Let us know you’re coming so we can make room for you.
+          </p>
+          <p className="drive-rsvp__event-status" aria-live="polite">
+            {driveStatus.type === "live"
+              ? `Happening now at ${driveStatus.event.venue}.`
+              : driveStatus.type === "ended"
+                ? "This adoption drive has ended. We’d still love to help you meet a pup."
+                : `Next up: ${driveStatus.event.label} at ${driveStatus.event.venue}.`}
           </p>
 
           <div className="drive-attendance" aria-live="polite">
@@ -504,10 +595,13 @@ function RsvpSection() {
                 value={form.eventDate}
                 onChange={(event) => setForm({ ...form, eventDate: event.target.value })}
               >
-                <option value="">Choose a day</option>
-                <option value="2026-12-05">5 December · 90’s Nest Cafe</option>
-                <option value="2026-12-06">6 December · Urban Brews</option>
-                <option value="both">Both days</option>
+                <option value="">{selectableEvents.length ? "Choose a day" : "No upcoming dates"}</option>
+                {selectableEvents.map((driveEvent) => (
+                  <option key={driveEvent.id} value={driveEvent.id}>
+                    {driveEvent.label} · {driveEvent.venue}
+                  </option>
+                ))}
+                {selectableEvents.length === DRIVE_EVENTS.length && <option value="both">Both days</option>}
               </select>
             </div>
             <div className="flex items-center justify-between gap-5">
@@ -523,15 +617,25 @@ function RsvpSection() {
                 onChange={(event) => setForm({ ...form, guests: event.target.value })}
               />
             </div>
-            <button type="submit" className="drive-submit" disabled={busy}>
-              {busy ? "Saving your spot…" : "Count me in"}
+            <button type="submit" className="drive-submit" disabled={busy || selectableEvents.length === 0}>
+              {busy ? "Saving your spot…" : selectableEvents.length ? "Count me in" : "Drive ended"}
               <ArrowUpRight size={18} />
             </button>
             {status.type && (
-              <p className={`flex items-start gap-2 text-sm ${status.type === "ok" ? "text-emerald-700" : "text-red-700"}`} role="status">
-                {status.type === "ok" ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
-                {status.msg}
-              </p>
+              <div className={`drive-rsvp__status${status.type === "ok" ? " is-success" : " is-error"}`} role="status">
+                <p className="flex items-start gap-2 text-sm">
+                  {status.type === "ok" ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
+                  {status.msg}
+                </p>
+                {status.confirmation && (
+                  <div className="drive-rsvp__confirmation">
+                    <strong>{status.confirmation.guests} {status.confirmation.guests === 1 ? "guest" : "guests"} registered</strong>
+                    {status.confirmation.events.map((driveEvent) => (
+                      <span key={driveEvent.id}>{driveEvent.label} · {driveEvent.venue}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
             <p className="text-center text-xs leading-5 text-stone-500">
               No pressure, no fees — just a lovely day with dogs.
@@ -671,20 +775,26 @@ export default function AdoptionDrive() {
           </div>
 
           <Reveal delay={0.35} className="drive-eventbar">
-            <div className="drive-eventbar__detail">
-              <span className="drive-eventbar__icon"><CalendarDays size={18} /></span>
-              <span className="drive-eventbar__copy">
-                <strong>Saturday, 5 December</strong>
-                <small>3 PM onwards · <a href="https://www.google.com/maps/search/?api=1&query=90%27s+Nest+Cafe%2C+Bijapur%2C+Karnataka" target="_blank" rel="noreferrer">90&apos;s Nest Cafe <ArrowUpRight size={11} /></a></small>
-              </span>
-            </div>
-            <div className="drive-eventbar__detail">
-              <span className="drive-eventbar__icon"><CalendarDays size={18} /></span>
-              <span className="drive-eventbar__copy">
-                <strong>Sunday, 6 December</strong>
-                <small>12 PM onwards · <a href="https://www.google.com/maps/search/?api=1&query=Urban+Brews%2C+Bijapur%2C+Karnataka" target="_blank" rel="noreferrer">Urban Brews <ArrowUpRight size={11} /></a></small>
-              </span>
-            </div>
+            {DRIVE_EVENTS.map((driveEvent) => (
+              <div className="drive-eventbar__detail" key={driveEvent.id}>
+                <span className="drive-eventbar__icon"><CalendarDays size={18} /></span>
+                <span className="drive-eventbar__copy">
+                  <strong>{driveEvent.label}</strong>
+                  <small>{driveEvent.time} · {driveEvent.venue}</small>
+                  <small>{driveEvent.address || "Exact address to be confirmed"}</small>
+                  <small>{driveEvent.parking || "Parking details to be confirmed"}</small>
+                  <small>{driveEvent.accessibility || "Accessibility details to be confirmed"}</small>
+                  <span className="drive-eventbar__actions">
+                    <a href={driveEvent.mapUrl} target="_blank" rel="noreferrer" aria-label={`Directions to ${driveEvent.venue}`}>
+                      Directions <ArrowUpRight size={12} />
+                    </a>
+                    <a href={`mailto:support@tailsofbijapur.org?subject=${encodeURIComponent(`Question about ${driveEvent.venue} event access`)}`}>
+                      Ask about access <ArrowUpRight size={12} />
+                    </a>
+                  </span>
+                </span>
+              </div>
+            ))}
             <div className="drive-eventbar__countdown">
               <Countdown />
             </div>
