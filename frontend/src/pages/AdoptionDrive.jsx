@@ -280,27 +280,32 @@ function LivePuppyDashboard() {
         {puppies.length > 0 ? (
           <div className="drive-live-dashboard__grid">
             {puppies.map((puppy, index) => (
-              <Reveal key={`${puppy.name}-${puppy.photo}-${index}`} delay={Math.min(index * 0.035, 0.2)} className="drive-live-puppy">
-                {puppy.photo ? (
-                  <img src={puppy.photo} alt={puppy.name || "Puppy in the adoption drive"} loading="lazy" />
-                ) : (
-                  <div className="drive-live-puppy__placeholder"><PawPrint size={30} /></div>
-                )}
+              <Reveal key={puppy.id || `${puppy.name}-${puppy.photo}-${index}`} delay={Math.min(index * 0.035, 0.2)} className="drive-live-puppy">
+                <div className="drive-live-puppy__media">
+                  {puppy.photo ? (
+                    <img src={puppy.photo} alt={puppy.name || "Puppy in the adoption drive"} loading="lazy" />
+                  ) : (
+                    <div className="drive-live-puppy__placeholder"><PawPrint size={30} /></div>
+                  )}
+                  <span className={`drive-live-puppy__status${puppy.status === "adopted" ? " is-adopted" : ""}`}>
+                    {puppy.status === "adopted" ? "Found a home" : "Looking for a home"}
+                  </span>
+                </div>
                 <div className="drive-live-puppy__info">
-                  <div>
+                  <div className="drive-live-puppy__heading">
                     <h3>{puppy.name || "A lovely Indie pup"}</h3>
-                    <span className={`drive-live-puppy__status${puppy.status === "adopted" ? " is-adopted" : ""}`}>
-                      {puppy.status === "adopted" ? "Adoption success" : "Ready to meet you"}
-                    </span>
-                    <dl className="drive-live-puppy__details">
-                      {puppy.age && <div><dt>Age</dt><dd>{puppy.age}</dd></div>}
-                      {puppy.gender && <div><dt>Gender</dt><dd>{puppy.gender}</dd></div>}
-                      <div>
-                        <dt>Health</dt>
-                        <dd>{getPuppyHealthNote(puppy)}</dd>
-                      </div>
-                    </dl>
+                    {(puppy.age || puppy.gender) && (
+                      <p className="drive-live-puppy__meta">
+                        {[puppy.age, puppy.gender].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
+                  <dl className="drive-live-puppy__details">
+                    <div>
+                      <dt>Vaccination & care</dt>
+                      <dd>{getPuppyHealthNote(puppy)}</dd>
+                    </div>
+                  </dl>
                   {puppy.status === "adopted" && (
                     <p className="drive-live-puppy__adopter">
                       {puppy.adopterFirstName ? `With ${puppy.adopterFirstName}` : "A new family found each other"}

@@ -1181,6 +1181,7 @@ app.get("/api/drive/puppies", async(req, res) => {
             available,
             adopted,
             puppies: puppies.map((puppy) => ({
+                id: puppy._id.toString(),
                 name: puppy.name || "",
                 photo: puppy.photos?.[0]?.url || "",
                 age: puppy.age || "",
